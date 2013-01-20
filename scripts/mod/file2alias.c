@@ -1021,22 +1021,6 @@ static int do_isapnp_entry(const char *filename,
 }
 ADD_TO_DEVTABLE("isapnp", isapnp_device_id, do_isapnp_entry);
 
-/* Looks like: "ipack:fNvNdN". */
-static int do_ipack_entry(const char *filename,
-			  void *symval, char *alias)
-{
-	DEF_FIELD(symval, ipack_device_id, format);
-	DEF_FIELD(symval, ipack_device_id, vendor);
-	DEF_FIELD(symval, ipack_device_id, device);
-	strcpy(alias, "ipack:");
-	ADD(alias, "f", format != IPACK_ANY_FORMAT, format);
-	ADD(alias, "v", vendor != IPACK_ANY_ID, vendor);
-	ADD(alias, "d", device != IPACK_ANY_ID, device);
-	add_wildcard(alias);
-	return 1;
-}
-ADD_TO_DEVTABLE("ipack", ipack_device_id, do_ipack_entry);
-
 /*
  * Append a match expression for a single masked hex digit.
  * outp points to a pointer to the character at which to append.
@@ -1132,28 +1116,6 @@ static int do_x86cpu_entry(const char *filename, void *symval,
 	return 1;
 }
 ADD_TO_DEVTABLE("x86cpu", x86_cpu_id, do_x86cpu_entry);
-
-/* LOOKS like cpu:type:*:feature:*FEAT* */
-static int do_cpu_entry(const char *filename, void *symval, char *alias)
-{
-	DEF_FIELD(symval, cpu_feature, feature);
-
-	sprintf(alias, "cpu:type:*:feature:*%04X*", feature);
-	return 1;
-}
-ADD_TO_DEVTABLE("cpu", cpu_feature, do_cpu_entry);
-
-/* Looks like: mei:S */
-static int do_mei_entry(const char *filename, void *symval,
-			char *alias)
-{
-	DEF_FIELD_ADDR(symval, mei_cl_device_id, name);
-
-	sprintf(alias, MEI_CL_MODULE_PREFIX "%s", *name);
-
-	return 1;
-}
-ADD_TO_DEVTABLE("mei", mei_cl_device_id, do_mei_entry);
 
 /* Does namelen bytes of name exactly match the symbol? */
 static bool sym_is(const char *name, unsigned namelen, const char *symbol)
