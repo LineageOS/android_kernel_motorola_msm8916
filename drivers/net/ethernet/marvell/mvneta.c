@@ -2729,6 +2729,9 @@ static int mvneta_probe(struct platform_device *pdev)
 
 	pp = netdev_priv(dev);
 
+	u64_stats_init(&pp->tx_stats.syncp);
+	u64_stats_init(&pp->rx_stats.syncp);
+
 	pp->tx_done_timer.function = mvneta_tx_done_timer_callback;
 	init_timer(&pp->tx_done_timer);
 	clear_bit(MVNETA_F_TX_DONE_TIMER_BIT, &pp->flags);
