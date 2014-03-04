@@ -1930,6 +1930,10 @@ int fcntl_getlk(struct file *filp, unsigned int cmd, struct flock __user *l)
 		goto out;
 
 	if (cmd == F_GETLKP) {
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_GETLK;
 		file_lock.fl_flags |= FL_FILE_PVT;
 		file_lock.fl_owner = (fl_owner_t)filp;
@@ -2061,11 +2065,19 @@ again:
 	 */
 	switch (cmd) {
 	case F_SETLKP:
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_SETLK;
 		file_lock->fl_flags |= FL_FILE_PVT;
 		file_lock->fl_owner = (fl_owner_t)filp;
 		break;
 	case F_SETLKPW:
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_SETLKW;
 		file_lock->fl_flags |= FL_FILE_PVT;
 		file_lock->fl_owner = (fl_owner_t)filp;
@@ -2120,6 +2132,10 @@ int fcntl_getlk64(struct file *filp, unsigned int cmd, struct flock64 __user *l)
 		goto out;
 
 	if (cmd == F_GETLKP) {
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_GETLK64;
 		file_lock.fl_flags |= FL_FILE_PVT;
 		file_lock.fl_owner = (fl_owner_t)filp;
@@ -2184,11 +2200,19 @@ again:
 	 */
 	switch (cmd) {
 	case F_SETLKP:
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_SETLK64;
 		file_lock->fl_flags |= FL_FILE_PVT;
 		file_lock->fl_owner = (fl_owner_t)filp;
 		break;
 	case F_SETLKPW:
+		error = -EINVAL;
+		if (flock.l_pid != 0)
+			goto out;
+
 		cmd = F_SETLKW64;
 		file_lock->fl_flags |= FL_FILE_PVT;
 		file_lock->fl_owner = (fl_owner_t)filp;
