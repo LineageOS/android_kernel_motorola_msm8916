@@ -432,14 +432,14 @@ struct rtnl_link_stats64 *mvneta_get_stats64(struct net_device *dev,
 	memset(stats, 0, sizeof(struct rtnl_link_stats64));
 
 	do {
-		start = u64_stats_fetch_begin_bh(&pp->rx_stats.syncp);
+		start = u64_stats_fetch_begin_irq(&pp->rx_stats.syncp);
 		stats->rx_packets = pp->rx_stats.packets;
 		stats->rx_bytes	= pp->rx_stats.bytes;
-	} while (u64_stats_fetch_retry_bh(&pp->rx_stats.syncp, start));
+	} while (u64_stats_fetch_retry_irq(&pp->rx_stats.syncp, start));
 
 
 	do {
-		start = u64_stats_fetch_begin_bh(&pp->tx_stats.syncp);
+		start = u64_stats_fetch_begin_irq(&pp->tx_stats.syncp);
 		stats->tx_packets = pp->tx_stats.packets;
 		stats->tx_bytes	= pp->tx_stats.bytes;
 	} while (u64_stats_fetch_retry_bh(&pp->tx_stats.syncp, start));
