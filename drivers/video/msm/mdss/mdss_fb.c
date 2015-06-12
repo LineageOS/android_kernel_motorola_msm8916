@@ -1716,7 +1716,6 @@ static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 			complete(&mfd->no_update.comp);
 
 			mfd->op_enable = false;
-			mutex_lock(&mfd->bl_lock);
 			if (mdss_panel_is_power_off(req_power_state)) {
 				/* Stop Display thread */
 				if (mfd->disp_thread)
@@ -1726,9 +1725,12 @@ static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 					bl_level_old = mfd->bl_level;
 				else
 					bl_level_old = mfd->unset_bl_level;
+
+				mutex_lock(&mfd->bl_lock);
 				mdss_fb_set_backlight(mfd, 0);
 				mfd->unset_bl_level = bl_level_old;
 				mfd->bl_updated = 0;
+				mutex_unlock(&mfd->bl_lock);
 
 				if (mfd->shutdown_pending &&
 					mfd->panel_info->bl_shutdown_delay)
@@ -1739,7 +1741,6 @@ static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 					* 1000);
 			}
 			mfd->panel_power_state = req_power_state;
-			mutex_unlock(&mfd->bl_lock);
 
 			ret = mfd->mdp.off_fnc(mfd);
 			if (ret)
