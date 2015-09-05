@@ -1075,6 +1075,48 @@ config MMI_DTB_LUX
 	  Only include Motorola device LUX DTB to limit the number that
 	  get built during kernel compilation.
 
+config MMI_DTB_MERLIN
+	depends on ARCH_MSM8916
+	default n
+	bool "Motorola Merlin Device DTBs"
+	help
+	  Only include Motorola Merlin specific DTBs to limit the number that
+	  get built during kernel compilation.
+
+	  Merlin is a Motorola device that uses MSM8939 chipset, which uses the
+	  MSM8916 defconfig.  Due to its many revisions, adding all of the device
+	  trees will consume at least 1MB of space.
+
+	  If unsure, say 'n'.
+
+config MMI_DTB_OSPREY
+	depends on ARCH_MSM8916
+	default n
+	bool "Motorola Osprey Device DTBs"
+	help
+	  Only include Motorola Osprey specific DTBs to limit the number that
+	  get built during kernel compilation.
+
+	  Osprey is a Motorola device that uses MSM8916 chipset, which uses the
+	  MSM8916 defconfig.  Due to its many revisions, adding all of the device
+	  trees will consume at least 1MB of space.
+
+	  If unsure, say 'n'.
+
+config MMI_DTB_SURNIA
+	depends on ARCH_MSM8916
+	default n
+	bool "Motorola Surnia Device DTBs"
+	help
+	  Only include Motorola Surnia specific DTBs to limit the number that
+	  get built during kernel compilation.
+
+	  Surnia is a Motorola device that uses MSM8916 chipset, which uses the
+	  MSM8916 defconfig.  Due to its many revisions, adding all of the device
+	  trees will consume at least 1MB of space.
+
+	  If unsure, say 'n'.
+
 config HAS_MACH_MEMUTILS
 	default n
 	bool "Motorola MSM memcpy enhancements"
