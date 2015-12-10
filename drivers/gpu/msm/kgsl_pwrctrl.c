@@ -2065,7 +2065,7 @@ static int _check_active_count(struct kgsl_device *device, int count)
 int kgsl_active_count_wait(struct kgsl_device *device, int count)
 {
 	int result = 0;
-	long wait_jiffies = HZ;
+	long wait_jiffies = msecs_to_jiffies(1000);
 
 	BUG_ON(!mutex_is_locked(&device->mutex));
 
