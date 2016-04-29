@@ -1133,11 +1133,4 @@ config HAS_MACH_MEMUTILS
 	help
 	Faster memcpy performance for MSM8916.
 
-
-config THUNDERPLUG_CONTROL
- 	bool "Enable plugging down/up of cores using powersuspend"
- 	help
- 	  This driver uses powersuspend to take down the cpu cores on a octa core device.
-
-
 endif

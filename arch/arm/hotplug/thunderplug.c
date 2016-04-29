@@ -10,6 +10,7 @@
  * GNU General Public License for more details.
  *
  * A simple hotplugging driver optimized for Octa Core CPUs
+ * Quadcore compatibility made by psndna88@xda
  */
 
 #include <linux/module.h>
@@ -22,10 +23,16 @@
 #include <linux/lcd_notify.h>
 #include <linux/cpufreq.h>
 
+#if defined(CONFIG_MMI_MERLIN_DTB) || defined(CONFIG_MMI_LUX_DTB)
 static int suspend_cpu_num = 2, resume_cpu_num = 7;
-static int endurance_level = 0;
 static int device_cpus = 8;
 static int core_limit = 8;
+#else
+static int suspend_cpu_num = 1, resume_cpu_num = 3;
+static int device_cpus = 4;
+static int core_limit = 4;
+#endif
+static int endurance_level = 0;
 
 static bool isSuspended = false;
 
@@ -58,7 +65,11 @@ static struct delayed_work tplug_boost;
 static struct workqueue_struct *tplug_resume_wq;
 static struct delayed_work tplug_resume_work;
 
+#if defined(CONFIG_MMI_MERLIN_DTB) || defined(CONFIG_MMI_LUX_DTB)
 static unsigned int last_load[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+#else
+static unsigned int last_load[4] = {0, 0, 0, 0};
+#endif
 
 struct cpu_load_data {
 	u64 prev_cpu_idle;
@@ -106,10 +117,12 @@ static inline void cpus_online_all(void)
 		if(resume_cpu_num > 1)
 			resume_cpu_num = 1;
 	break;
+#if defined(CONFIG_MMI_MERLIN_DTB) || defined(CONFIG_MMI_LUX_DTB)
 	case 0:
 		if(resume_cpu_num < 7)
 			resume_cpu_num = 7;
 	break;
+#endif
 	default:
 	break;
 	}
@@ -374,18 +387,26 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 
 	switch(endurance_level)
 	{
+#if defined(CONFIG_MMI_MERLIN_DTB) || defined(CONFIG_MMI_LUX_DTB)
 	case 0:
 		core_limit = 8;
 	break;
+#endif
 	case 1:
 		core_limit = 4;
 	break;
 	case 2:
 		core_limit = 2;
 	break;
+#if defined(CONFIG_MMI_MERLIN_DTB) || defined(CONFIG_MMI_LUX_DTB)
 	default:
 		core_limit = 8;
 	break;
+#else
+	default:
+		core_limit = 4;
+	break;
+#endif
 	}
 
 	for(i = 0 ; i < core_limit; i++)
@@ -569,9 +590,8 @@ static int __init thunderplug_init(void)
         return ret;
 }
 
+late_initcall(thunderplug_init);
+
 MODULE_LICENSE("GPL and additional rights");
 MODULE_AUTHOR("Varun Chitre <varun.chitre15@gmail.com>");
 MODULE_DESCRIPTION("Hotplug driver for OctaCore CPU");
-late_initcall(thunderplug_init);
-
-

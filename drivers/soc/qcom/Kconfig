@@ -583,6 +583,12 @@ config MSM_PERFORMANCE_HOTPLUG_ON
           compile out the nodes needed for core-control functionality through
           msm_performance.
 
+<<<<<<< HEAD
+=======
+config STATE_NOTIFIER
+        bool "State Notifier"
+
+>>>>>>> 0406e0d... Enable module building for thunderplug, state helper
 source "drivers/soc/qcom/memshare/Kconfig"
 
 config BOOTINFO
@@ -594,7 +600,11 @@ config FORCE_FAST_CHARGE
 	default y
 	help
 	  This allows users to override default charge rate for both USB and AC
+<<<<<<< HEAD
 	  charger input current.
+=======
+	  charger input current
+>>>>>>> 0406e0d... Enable module building for thunderplug, state helper
 
 config MMI_SOC_INFO
 	default n
