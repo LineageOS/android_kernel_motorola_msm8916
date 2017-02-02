@@ -258,6 +258,7 @@ void ion_heap_unmap_kernel(struct ion_heap *, struct ion_buffer *);
 int ion_heap_map_user(struct ion_heap *, struct ion_buffer *,
 			struct vm_area_struct *);
 int ion_heap_buffer_zero(struct ion_buffer *buffer);
+int ion_heap_pages_zero(struct page *page, size_t size, pgprot_t pgprot);
 
 int msm_ion_heap_high_order_page_zero(struct page *page, int order);
 int msm_ion_heap_buffer_zero(struct ion_buffer *buffer);
