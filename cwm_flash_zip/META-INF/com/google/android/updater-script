@@ -1,5 +1,5 @@
-ui_print("Inazuma Kernel for Motorola MSM8916 Devices");
-
+ui_print("Christian V6 Kernel for Moto  E LTE");
+ui_print("Created by nguyenquangduc2000!");
 assert(getprop("ro.product.device") == "surnia" ||
        getprop("ro.product.device") == "surnia_umts" ||
        getprop("ro.product.device") == "surnia_uds" ||
