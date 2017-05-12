@@ -36,6 +36,7 @@
 #define MDP_PPP_MAX_BPP 4
 #define MDP_PPP_DYNAMIC_FACTOR 3
 #define MDP_PPP_MAX_READ_WRITE 3
+#define MDP_PPP_MAX_WIDTH	0xFFF
 #define ENABLE_SOLID_FILL	0x2
 #define DISABLE_SOLID_FILL	0x0
 
@@ -122,6 +123,11 @@ int mdp3_ppp_get_img(struct mdp_img *img, struct mdp_blit_req *req,
 		struct mdp3_img_data *data)
 {
 	struct msmfb_data fb_data;
+
+	if (img->width > MDP_PPP_MAX_WIDTH) {
+		pr_err("%s incorrect width %d\n", __func__, img->width);
+		return -EINVAL;
+	}
 
 	fb_data.flags = img->priv;
 	fb_data.memory_id = img->memory_id;
