@@ -1738,6 +1738,10 @@ static long msm_actuator_subdev_do_ioctl(
 			parg = &actuator_data;
 			break;
 		}
+		break;
+	case VIDIOC_MSM_ACTUATOR_CFG:
+		pr_err("%s: invalid cmd 0x%x received\n", __func__, cmd);
+		return -EINVAL;
 	}
 
 	if (cmd == VIDIOC_MSM_ACTUATOR_CFG32)
