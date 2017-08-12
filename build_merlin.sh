@@ -53,7 +53,7 @@ HKernel ()
   echo "          Compiling HKernel kernel          "
   echo -e "***********************************************$nocol"
   
-     if [ ! -f $KERNELDIR/.config ];
+     if [ ! -f $KERN_IMG ];
      then
      make clean
      fi
