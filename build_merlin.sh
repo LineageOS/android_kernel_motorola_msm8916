@@ -16,7 +16,6 @@
 #!/bin/bash
 KERNEL_DIR=/home/ubuntu/workspace/HKernel
 KERN_IMG=$KERNEL_DIR/arch/arm/boot/zImage
-DTBTOOL=$KERNEL_DIR/tools/dtbToolCM
 BUILD_START=$(date +"%s")
 blue='\033[0;34m'
 cyan='\033[0;36m'
