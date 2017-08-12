@@ -14,7 +14,7 @@
 #
 
 #!/bin/bash
-KERNEL_DIR=~/HKernel
+KERNEL_DIR=/home/ubuntu/workspace/HKernel
 KERN_IMG=$KERNEL_DIR/arch/arm/boot/zImage
 DTBTOOL=$KERNEL_DIR/tools/dtbToolCM
 BUILD_START=$(date +"%s")
@@ -25,12 +25,12 @@ red='\033[0;31m'
 nocol='\033[0m'
 export ARCH=arm
 export SUBARCH=arm
-export CROSS_COMPILE=../arm-eabi-6.0/bin/arm-eabi-
+export CROSS_COMPILE=/home/ubuntu/workspace/arm-eabi-6.0/bin/arm-eabi-
 export KBUILD_BUILD_USER="hk"
 export KBUILD_BUILD_HOST="jarvis"
 rm -f arch/arm/boot/dts/*.dtb
 rm -f arch/arm/boot/dt.img
-rm -f ../AnyKernel/zImage
+rm -f /home/ubuntu/workspace/AnyKernel2/zImage
 
 compile_kernel ()
 {
@@ -42,11 +42,6 @@ compile_kernel ()
   echo -e "             Building kernel          "
   echo -e "***********************************************$nocol"
   make -j4
-  if ! [ -a $KERN_IMG ];
-  then
-    echo -e "$red Kernel Compilation failed! Fix the errors! $nocol"
-    exit 1
-  fi
   echo -e "$cyan***********************************************"
   echo -e "         	Building modules          "
   echo -e "***********************************************$nocol"
@@ -59,18 +54,17 @@ HKernel ()
   echo "          Compiling HKernel kernel          "
   echo -e "***********************************************$nocol"
   
-     make clean
-     make mrproper
+     
      compile_kernel
 
 echo -e "$cyan***********************************************"
 echo -e " Converting the output into a flashable zip"
 echo -e "***********************************************$nocol"
 
-find -name '*.ko' -type f -exec cp '{}' ../AnyKernel/modules/ \;
-cp arch/arm/boot/zImage ../AnyKernel/
-cd ~/AnyKernel/
-zip -r9 ../HKernel-v.zip ../AnyKernel/
+find -name '*.ko' -type f -exec cp '{}' ../AnyKernel2/modules/ \;
+cp arch/arm/boot/zImage ../AnyKernel2/
+cd ../AnyKernel2/
+zip -r9 ../HKernel-v.zip *
 today=$(date +"-%d%m%Y")
 }
 HKernel
