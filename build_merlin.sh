@@ -63,7 +63,7 @@ echo -e "$cyan***********************************************"
 echo -e " Converting the output into a flashable zip"
 echo -e "***********************************************$nocol"
 
-today=$(date +"-%d%m%Y")
+today=$(date +"-%d%m%Y-%H.%M.%S")
 find -name '*.ko' -type f -exec cp '{}' /home/ubuntu/workspace/AnyKernel2/modules/ \;
 cp arch/arm/boot/zImage /home/ubuntu/workspace/AnyKernel2/
 cd /home/ubuntu/workspace/AnyKernel2/
