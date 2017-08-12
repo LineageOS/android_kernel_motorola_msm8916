@@ -14,7 +14,7 @@
 #
 
 #!/bin/bash
-KERNEL_DIR=/home/ubuntu/workspace/HKernel
+export KERNELDIR=`readlink -f .`
 KERN_IMG=$KERNEL_DIR/arch/arm/boot/zImage
 BUILD_START=$(date +"%s")
 blue='\033[0;34m'
@@ -53,7 +53,10 @@ HKernel ()
   echo "          Compiling HKernel kernel          "
   echo -e "***********************************************$nocol"
   
-     
+     if [ ! -f $KERNELDIR/.config ];
+     then
+     make clean
+     fi
      compile_kernel
 
 echo -e "$cyan***********************************************"
