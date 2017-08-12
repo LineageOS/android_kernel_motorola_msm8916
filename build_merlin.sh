@@ -63,11 +63,11 @@ echo -e "$cyan***********************************************"
 echo -e " Converting the output into a flashable zip"
 echo -e "***********************************************$nocol"
 
+today=$(date +"-%d%m%Y")
 find -name '*.ko' -type f -exec cp '{}' /home/ubuntu/workspace/AnyKernel2/modules/ \;
 cp arch/arm/boot/zImage /home/ubuntu/workspace/AnyKernel2/
 cd /home/ubuntu/workspace/AnyKernel2/
-zip -r9 /home/ubuntu/workspace/HKernel-v.zip *
-today=$(date +"-%d%m%Y")
+zip -r9 /home/ubuntu/workspace/HKernel-$today.zip *
 }
 HKernel
 BUILD_END=$(date +"%s")
