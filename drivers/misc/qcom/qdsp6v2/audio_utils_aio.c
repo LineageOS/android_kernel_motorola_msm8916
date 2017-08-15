@@ -1031,6 +1031,8 @@ static void audio_aio_async_write(struct q6audio_aio *audio,
 	struct audio_client *ac;
 	struct audio_aio_write_param param;
 
+	memset(&param, 0, sizeof(param));
+
 	if (!audio || !buf_node) {
 		pr_err("%s NULL pointer audio=[0x%p], buf_node=[0x%p]\n",
 			__func__, audio, buf_node);
