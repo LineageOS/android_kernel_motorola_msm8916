@@ -1132,4 +1132,5 @@ config HAS_MACH_MEMUTILS
 	bool "Motorola MSM memcpy enhancements"
 	help
 	Faster memcpy performance for MSM8916.
+
 endif

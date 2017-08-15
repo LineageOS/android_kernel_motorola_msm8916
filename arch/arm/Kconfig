@@ -1410,7 +1410,10 @@ config PERFMAP
 endmenu
 
 source "arch/arm/common/Kconfig"
+
+menu "Special purpose ARM multi-core CPU Hotplug Drivers"
 source "arch/arm/hotplug/Kconfig"
+endmenu
 
 menu "Bus support"
 

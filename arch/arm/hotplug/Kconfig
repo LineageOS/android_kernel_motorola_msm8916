@@ -1,5 +1,5 @@
 config CLUSTER_PLUG
-        bool "Enable cluster-plug cpu hotplug driver"
+	tristate "Cluster-Plug hotplug driver for homogeneous ARM big.LITTLE systems"
         default n
         help
           CPU hotplug driver designed for ARM big.LITTLE systems where
@@ -9,3 +9,16 @@ config CLUSTER_PLUG
           This hotplug implementation always keeps the big cluster
           online, and only activates the little cluster for heavy
           parallel loads.
+
+config THUNDERPLUG_CONTROL
+	tristate "Thunderplug - plugging down/up of multi-cores using powersuspend"
+        default n
+ 	    help
+ 	       This driver uses powersuspend to take down the cpu cores on a octa core device.
+
+config STATE_HELPER
+        tristate "State Notifier & Helper"
+        default n
+	depends on STATE_NOTIFIER
+ 	    help
+ 	       This driver hotplugs cores based on battery level (Quadcore)
