@@ -55,14 +55,10 @@
 #define SENSOR_SCALING_FACTOR 1
 #define CPU_DEVICE "cpu%d"
 
-<<<<<<< HEAD
-static struct msm_thermal_data msm_thermal_info;
-=======
 struct msm_thermal_data msm_thermal_info;
 
 EXPORT_SYMBOL(msm_thermal_info);
 
->>>>>>> 0406e0d... Enable module building for thunderplug, state helper
 static struct delayed_work check_temp_work;
 static bool core_control_enabled;
 static uint32_t cpus_offlined;
