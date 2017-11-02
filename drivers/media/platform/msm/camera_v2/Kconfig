@@ -274,3 +274,11 @@ config MSM_FD
 	 depends on MSMB_CAMERA
 	 ---help---
 	    Enables support for the MSM FD face detection engine.
+
+config MSM_USES_M_STACK
+	 bool "Enable the support for devices that use a Marshmallow stack"
+	 default n
+	 depends on MSMB_CAMERA
+	 ---help---
+	    Older stacks do not support camif subsample, expect an 8K extrasize
+	    and somehow "msm: camera: sensor: Validate step_boundary" breaks camera.
