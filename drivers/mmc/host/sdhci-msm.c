@@ -3976,6 +3976,8 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 		}
 	}
 
+	device_enable_async_suspend(&pdev->dev);
+
 	sdhci_msm_debugfs_init(msm_host);
 
 	/* Successful initialization */
