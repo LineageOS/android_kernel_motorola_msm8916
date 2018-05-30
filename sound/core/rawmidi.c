@@ -957,13 +957,13 @@ static long snd_rawmidi_kernel_read1(struct snd_rawmidi_substream *substream,
 	long result = 0, count1;
 	struct snd_rawmidi_runtime *runtime = substream->runtime;
 
-        if (userbuf)
-                mutex_lock(&runtime->realloc_mutex);
+	if (userbuf)
+		mutex_lock(&runtime->realloc_mutex);
+	spin_lock_irqsave(&runtime->lock, flags);
 	while (count > 0 && runtime->avail) {
 		count1 = runtime->buffer_size - runtime->appl_ptr;
 		if (count1 > count)
 			count1 = count;
-		spin_lock_irqsave(&runtime->lock, flags);
 		if (count1 > (int)runtime->avail)
 			count1 = runtime->avail;
 		if (kernelbuf)
