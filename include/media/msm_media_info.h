@@ -1,13 +1,6 @@
 #ifndef __MEDIA_INFO_H__
 #define __MEDIA_INFO_H__
 
-#ifndef __KERNEL__
-#include <string.h>
-#ifdef _ANDROID_
-#include <cutils/properties.h>
-#endif
-#endif
-
 #ifndef MSM_MEDIA_ALIGN
 #define MSM_MEDIA_ALIGN(__sz, __align) (((__sz) + (__align-1)) & (~(__align-1)))
 #endif
@@ -156,25 +149,10 @@ static inline unsigned int VENUS_EXTRADATA_SIZE(int width, int height)
 	 * In the future, calculate the size based on the w/h but just
 	 * hardcode it for now since 16K satisfies all current usecases.
 	 */
-#ifdef __KERNEL__
 #ifndef CONFIG_MSM_USES_M_STACK
 	return 16 * 1024;
 #else
 	return 8 * 1024;
-#endif
-#else
-	static int is_legacy = -1;
-	if (is_legacy < 0) {
-		char device[PROPERTY_VALUE_MAX] = {0};
-		property_get("ro.hw.device", device, "");
-		if ((strcmp(device, "surnia") == 0) ||
-			(strcmp(device, "osprey") == 0) ||
-			(strcmp(device, "merlin") == 0))
-			is_legacy = 1;
-		else
-			is_legacy = 0;
-	}
-	return is_legacy ? 8 * 1024 : 16 * 1024;
 #endif
 }
 
