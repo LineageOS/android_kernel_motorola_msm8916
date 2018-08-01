@@ -509,7 +509,7 @@ static void led_work (struct work_struct *work)
 		changed++;
 	}
 	if (changed)
-		queue_delayed_work(system_power_efficient_wq, &hub->leds, LED_CYCLE_PERIOD);
+		schedule_delayed_work(&hub->leds, LED_CYCLE_PERIOD);
 }
 
 /* use a short timeout for hub/port status fetches */
@@ -1078,7 +1078,8 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 				goto init2;
 #endif
 			PREPARE_DELAYED_WORK(&hub->init_work, hub_init_func2);
-			queue_delayed_work(system_power_efficient_wq, &hub->init_work, msecs_to_jiffies(delay));
+			schedule_delayed_work(&hub->init_work,
+					msecs_to_jiffies(delay));
 
 			/* Suppress autosuspend until init is done */
 			usb_autopm_get_interface_no_resume(
@@ -1238,8 +1239,9 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 		/* Don't do a long sleep inside a workqueue routine */
 		if (type == HUB_INIT2) {
 			PREPARE_DELAYED_WORK(&hub->init_work, hub_init_func3);
-			device_unlock(hub->intfdev);
-			queue_delayed_work(system_power_efficient_wq, &hub->init_work, msecs_to_jiffies(delay));
+			schedule_delayed_work(&hub->init_work,
+					msecs_to_jiffies(delay));
+                        device_unlock(hub->intfdev);
 			return;		/* Continues at init3: below */
 		} else {
 			msleep(delay);
@@ -1252,7 +1254,7 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 	if (status < 0)
 		dev_err(hub->intfdev, "activate --> %d\n", status);
 	if (hub->has_indicators && blinkenlights)
-		queue_delayed_work(system_power_efficient_wq, &hub->leds, LED_CYCLE_PERIOD);
+		schedule_delayed_work(&hub->leds, LED_CYCLE_PERIOD);
 
 	/* Scan all ports that need attention */
 	kick_khubd(hub);
@@ -4421,7 +4423,7 @@ check_highspeed (struct usb_hub *hub, struct usb_device *udev, int port1)
 		/* hub LEDs are probably harder to miss than syslog */
 		if (hub->has_indicators) {
 			hub->indicator[port1-1] = INDICATOR_GREEN_BLINK;
-			queue_delayed_work(system_power_efficient_wq, &hub->leds, 0);
+			schedule_delayed_work (&hub->leds, 0);
 		}
 	}
 	kfree(qual);
@@ -4658,7 +4660,7 @@ static void hub_port_connect_change(struct usb_hub *hub, int port1,
 				if (hub->has_indicators) {
 					hub->indicator[port1-1] =
 						INDICATOR_AMBER_BLINK;
-					queue_delayed_work( system_power_efficient_wq, &hub->leds, 0);
+					schedule_delayed_work (&hub->leds, 0);
 				}
 				status = -ENOTCONN;	/* Don't retry */
 				goto loop_disable;
