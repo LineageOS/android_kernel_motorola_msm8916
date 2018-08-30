@@ -146,10 +146,11 @@ static void diag_send_log_mask_update(struct diag_smd_info *smd_info,
 			}
 			log_mask.update_buf = temp;
 			log_mask.update_buf_len = header_len + mask_size;
+			buf = temp;
 		}
 
 		memcpy(buf, &ctrl_pkt, header_len);
-		if (mask_size > 0)
+		if (mask_size > 0 && mask_size <= LOG_MASK_SIZE)
 			memcpy(buf + header_len, mask->ptr, mask_size);
 
 		err = diag_smd_write(smd_info, buf, header_len + mask_size);
@@ -215,9 +216,16 @@ static void diag_send_event_mask_update(struct diag_smd_info *smd_info)
 			} else {
 				event_mask.update_buf = temp;
 				event_mask.update_buf_len = temp_len;
+				buf = temp;
 			}
 		}
-		memcpy(buf + sizeof(header), event_mask.ptr, num_bytes);
+		if (num_bytes > 0 && num_bytes < event_mask.mask_len)
+			memcpy(buf + sizeof(header), event_mask.ptr, num_bytes);
+		else {
+			pr_err("diag: num_bytes(%d) is not satisfying length condition\n",
+				num_bytes);
+			goto err;
+		}
 		write_len += num_bytes;
 		break;
 	default:
@@ -298,6 +306,7 @@ static void diag_send_msg_mask_update(struct diag_smd_info *smd_info,
 			} else {
 				msg_mask.update_buf = temp;
 				msg_mask.update_buf_len = temp_len;
+				buf = temp;
 				pr_debug("diag: In %s, successfully reallocated msg_mask update buffer to len: %d\n",
 					 __func__, msg_mask.update_buf_len);
 			}
