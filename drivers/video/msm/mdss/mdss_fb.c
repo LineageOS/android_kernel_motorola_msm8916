@@ -61,6 +61,9 @@
 #define MDSS_FB_NUM 2
 #endif
 
+int backlight_min = 0;
+module_param(backlight_min, int, 0644);
+
 #ifndef EXPORT_COMPAT
 #define EXPORT_COMPAT(x)
 #endif
@@ -270,6 +273,10 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 
 	if (value > mfd->panel_info->brightness_max)
 		value = mfd->panel_info->brightness_max;
+
+	// Apply min limits for LCD backlight (0 is exception for display off)
+	if (value != 0 && value < backlight_min)
+		value = backlight_min;
 
 	/* This maps android backlight level 0 to 255 into
 	   driver backlight level 0 to bl_max with rounding */
