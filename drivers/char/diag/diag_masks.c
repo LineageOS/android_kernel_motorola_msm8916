@@ -150,7 +150,7 @@ static void diag_send_log_mask_update(struct diag_smd_info *smd_info,
 		}
 
 		memcpy(buf, &ctrl_pkt, header_len);
-		if (mask_size > 0 && mask_size <= LOG_MASK_SIZE)
+		if (mask_size > 0)
 			memcpy(buf + header_len, mask->ptr, mask_size);
 
 		err = diag_smd_write(smd_info, buf, header_len + mask_size);
@@ -219,7 +219,7 @@ static void diag_send_event_mask_update(struct diag_smd_info *smd_info)
 				buf = temp;
 			}
 		}
-		if (num_bytes > 0 && num_bytes < event_mask.mask_len)
+		if (num_bytes > 0)
 			memcpy(buf + sizeof(header), event_mask.ptr, num_bytes);
 		else {
 			pr_err("diag: num_bytes(%d) is not satisfying length condition\n",
