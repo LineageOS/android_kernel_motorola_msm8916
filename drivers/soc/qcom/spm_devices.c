@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, 2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -469,7 +469,7 @@ static struct msm_spm_device *msm_spm_get_device(struct platform_device *pdev)
 
 	if ((cpu >= 0) && cpu < num_possible_cpus())
 		dev = &per_cpu(msm_cpu_spm_device, cpu);
-	else if ((cpu == 0xffff) || (cpu < 0))
+	else if (cpu == 0xffff)
 		dev = devm_kzalloc(&pdev->dev, sizeof(struct msm_spm_device),
 					GFP_KERNEL);
 
