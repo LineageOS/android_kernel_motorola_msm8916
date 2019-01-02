@@ -272,6 +272,11 @@ static int snd_usb_create_streams(struct snd_usb_audio *chip, int ctrlif)
 			return -EINVAL;
 		}
 
+		if (h1->bLength < sizeof(*h1)) {
+			dev_err(&dev->dev, "cannot find UAC_HEADER\n");
+			return -EINVAL;
+		}
+
 		if (!h1->bInCollection) {
 			snd_printk(KERN_INFO "skipping empty audio interface (v1)\n");
 			return -EINVAL;
