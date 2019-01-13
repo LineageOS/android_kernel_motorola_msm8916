@@ -2848,7 +2848,7 @@ static int wcd_cpe_lsm_lab_control(
 {
 	struct wcd_cpe_core *core = core_handle;
 	int ret = 0, pld_size = CPE_PARAM_SIZE_LSM_LAB_CONTROL;
-	struct cpe_lsm_control_lab cpe_lab_enable;
+	struct cpe_lsm_control_lab cpe_lab_enable = {};
 	struct cpe_lsm_lab_enable *lab_enable = &cpe_lab_enable.lab_enable;
 
 	pr_debug("%s: enter payload_size = %d Enable %d\n",
