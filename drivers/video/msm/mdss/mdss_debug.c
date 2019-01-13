@@ -147,8 +147,8 @@ static ssize_t panel_debug_base_reg_write(struct file *file,
 
 	struct mdss_data_type *mdata = mdss_res;
 	struct mdss_panel_data *panel_data = NULL;
-	struct mdss_mdp_ctl *ctl;
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata;
+	struct mdss_mdp_ctl *ctl = mdata->ctl_off + 0;
+	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 	struct dsi_cmd_desc dsi_write_cmd = {
 		{0/*data type*/, 1, 0, 0, 0, 0/* len */}, reg};
 	struct dcs_cmd_req cmdreq;
