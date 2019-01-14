@@ -1329,8 +1329,8 @@ static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
 	uint32_t dir = 0;
 	uint32_t i = IN;
 	uint32_t *payload;
-	unsigned long dsp_flags;
-	unsigned long flags;
+	unsigned long dsp_flags = 0;
+	unsigned long flags = 0;
 	struct asm_buffer_node *buf_node = NULL;
 	struct list_head *ptr, *next;
 
