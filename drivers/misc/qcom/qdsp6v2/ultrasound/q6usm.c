@@ -519,6 +519,11 @@ static int32_t q6usm_mmapcallback(struct apr_client_data *data, void *priv)
 		 data->src_port, data->dest_port);
 
 	if (data->opcode == APR_BASIC_RSP_RESULT) {
+		if (data->payload_size < (2 * sizeof(uint32_t))) {
+			pr_err("%s: payload has invalid size[%d]\n", __func__,
+			       data->payload_size);
+			return -EINVAL;
+		}
 		/* status field check */
 		if (payload[1]) {
 			pr_err("%s: wrong response[%d] on cmd [%d]\n",
