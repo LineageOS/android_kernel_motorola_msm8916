@@ -193,6 +193,7 @@
 		#size-cells = <1>;
 		reg = <0xb012000 0x1000>;
 		qcom,name = "performance-l2";
+		qcom,core-id = <0xffff>;
 		qcom,saw2-ver-reg = <0xfd0>;
 		qcom,saw2-cfg = <0x1>;
 		qcom,saw2-spm-dly= <0x3C11840A>;
@@ -211,6 +212,7 @@
 		#size-cells = <1>;
 		reg = <0xb112000 0x1000>;
 		qcom,name = "power-l2";
+		qcom,core-id = <0xffff>;
 		qcom,saw2-ver-reg = <0xfd0>;
 		qcom,saw2-cfg = <0x1>;
 		qcom,saw2-spm-dly= <0x3C11840A>;
@@ -229,6 +231,7 @@
 		#size-cells = <1>;
 		reg = <0xb1d2000 0x1000>;
 		qcom,name = "system-cci";
+		qcom,core-id = <0xffff>;
 		qcom,saw2-ver-reg = <0xfd0>;
 		qcom,saw2-cfg = <0x14>;
 		qcom,saw2-spm-dly= <0x3C102800>;
