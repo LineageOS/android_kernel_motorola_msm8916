@@ -719,7 +719,8 @@ static void cpufreq_interactive_boost(struct cpufreq_interactive_tunables *tunab
 
 	for_each_online_cpu(i) {
 		pcpu = &per_cpu(cpuinfo, i);
-		if (tunables != pcpu->policy->governor_data)
+		if (pcpu->policy == NULL ||
+				tunables != pcpu->policy->governor_data)
 			continue;
 
 		spin_lock_irqsave(&pcpu->target_freq_lock, flags[1]);
