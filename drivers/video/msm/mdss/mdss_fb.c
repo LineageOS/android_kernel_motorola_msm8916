@@ -61,6 +61,9 @@
 #define MDSS_FB_NUM 2
 #endif
 
+int backlight_min = 0;
+module_param(backlight_min, int, 0644);
+
 #ifndef EXPORT_COMPAT
 #define EXPORT_COMPAT(x)
 #endif
@@ -270,6 +273,10 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 
 	if (value > mfd->panel_info->brightness_max)
 		value = mfd->panel_info->brightness_max;
+
+	// Apply min limits for LCD backlight (0 is exception for display off)
+	if (value != 0 && value < backlight_min)
+		value = backlight_min;
 
 	/* This maps android backlight level 0 to 255 into
 	   driver backlight level 0 to bl_max with rounding */
@@ -3297,10 +3304,10 @@ static int __mdss_fb_display_thread(void *data)
 				(atomic_read(&mfd->commits_pending) ||
 				 kthread_should_stop()));
 
-		if (ret) {
-			pr_info("%s: interrupted", __func__);
-			continue;
-		}
+		      if (ret) {
+ 				pr_info("%s: interrupted", __func__);
+ 				continue;
+ 		      }
 
 		if (kthread_should_stop())
 			break;
@@ -3310,8 +3317,8 @@ static int __mdss_fb_display_thread(void *data)
 		wake_up_all(&mfd->idle_wait_q);
 	}
 
-	mdss_fb_release_kickoff(mfd);
 	atomic_set(&mfd->commits_pending, 0);
+	atomic_set(&mfd->kickoff_pending, 0);
 	wake_up_all(&mfd->idle_wait_q);
 
 	return ret;

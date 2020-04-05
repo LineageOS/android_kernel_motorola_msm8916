@@ -36,9 +36,64 @@ enum {
 	BINDER_TYPE_PTR		= B_PACK_CHARS('p', 't', '*', B_TYPE_LARGE),
 };
 
-enum {
+/**
+ * enum flat_binder_object_shifts: shift values for flat_binder_object_flags
+ * @FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT: shift for getting scheduler policy.
+ *
+ */
+enum flat_binder_object_shifts {
+	FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT = 9,
+};
+
+/**
+ * enum flat_binder_object_flags - flags for use in flat_binder_object.flags
+ */
+enum flat_binder_object_flags {
+	/**
+	 * @FLAT_BINDER_FLAG_PRIORITY_MASK: bit-mask for min scheduler priority
+	 *
+	 * These bits can be used to set the minimum scheduler priority
+	 * at which transactions into this node should run. Valid values
+	 * in these bits depend on the scheduler policy encoded in
+	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK.
+	 *
+	 * For SCHED_NORMAL/SCHED_BATCH, the valid range is between [-20..19]
+	 * For SCHED_FIFO/SCHED_RR, the value can run between [1..99]
+	 */
 	FLAT_BINDER_FLAG_PRIORITY_MASK = 0xff,
+	/**
+	 * @FLAT_BINDER_FLAG_ACCEPTS_FDS: whether the node accepts fds.
+	 */
 	FLAT_BINDER_FLAG_ACCEPTS_FDS = 0x100,
+	/**
+	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK: bit-mask for scheduling policy
+	 *
+	 * These two bits can be used to set the min scheduling policy at which
+	 * transactions on this node should run. These match the UAPI
+	 * scheduler policy values, eg:
+	 * 00b: SCHED_NORMAL
+	 * 01b: SCHED_FIFO
+	 * 10b: SCHED_RR
+	 * 11b: SCHED_BATCH
+	 */
+	FLAT_BINDER_FLAG_SCHED_POLICY_MASK =
+		3U << FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT,
+
+	/**
+	 * @FLAT_BINDER_FLAG_INHERIT_RT: whether the node inherits RT policy
+	 *
+	 * Only when set, calls into this node will inherit a real-time
+	 * scheduling policy from the caller (for synchronous transactions).
+	 */
+	FLAT_BINDER_FLAG_INHERIT_RT = 0x800,
+
+	/**
+	 * @FLAT_BINDER_FLAG_TXN_SECURITY_CTX: request security contexts
+	 *
+	 * Only when set, causes senders to include their security
+	 * context
+	 */
+	FLAT_BINDER_FLAG_TXN_SECURITY_CTX = 0x1000,
 };
 
 #ifdef BINDER_IPC_32BIT
@@ -178,17 +233,34 @@ struct binder_version {
 	__s32       protocol_version;
 };
 
-struct binder_get_peer {
-       pid_t   self;
-       pid_t   remote;
-};
-
 /* This is the current protocol version. */
 #ifdef BINDER_IPC_32BIT
 #define BINDER_CURRENT_PROTOCOL_VERSION 7
 #else
 #define BINDER_CURRENT_PROTOCOL_VERSION 8
 #endif
+
+/*
+ * Use with BINDER_GET_NODE_DEBUG_INFO, driver reads ptr, writes to all fields.
+ * Set ptr to NULL for the first call to get the info for the first node, and
+ * then repeat the call passing the previously returned value to get the next
+ * nodes.  ptr will be 0 when there are no more nodes.
+ */
+struct binder_node_debug_info {
+	binder_uintptr_t ptr;
+	binder_uintptr_t cookie;
+	__u32            has_strong_ref;
+	__u32            has_weak_ref;
+};
+
+struct binder_node_info_for_ref {
+	__u32            handle;
+	__u32            strong_count;
+	__u32            weak_count;
+	__u32            reserved1;
+	__u32            reserved2;
+	__u32            reserved3;
+};
 
 #define BINDER_WRITE_READ		_IOWR('b', 1, struct binder_write_read)
 #define	BINDER_SET_IDLE_TIMEOUT		_IOW('b', 3, __s64)
@@ -197,7 +269,10 @@ struct binder_get_peer {
 #define	BINDER_SET_CONTEXT_MGR		_IOW('b', 7, __s32)
 #define	BINDER_THREAD_EXIT		_IOW('b', 8, __s32)
 #define BINDER_VERSION			_IOWR('b', 9, struct binder_version)
-#define BINDER_GET_PEER_PID            _IOWR('b', 10, struct binder_get_peer)
+#define BINDER_SET_INHERIT_FIFO_PRIO	_IO('b', 10)
+#define BINDER_GET_NODE_DEBUG_INFO	_IOWR('b', 11, struct binder_node_debug_info)
+#define BINDER_GET_NODE_INFO_FOR_REF	_IOWR('b', 12, struct binder_node_info_for_ref)
+#define BINDER_SET_CONTEXT_MGR_EXT	_IOW('b', 13, struct flat_binder_object)
 
 /*
  * NOTE: Two special error codes you should check for when calling
@@ -254,6 +329,11 @@ struct binder_transaction_data {
 	} data;
 };
 
+struct binder_transaction_data_secctx {
+	struct binder_transaction_data transaction_data;
+	binder_uintptr_t secctx;
+};
+
 struct binder_transaction_data_sg {
 	struct binder_transaction_data transaction_data;
 	binder_size_t buffers_size;
@@ -289,6 +369,11 @@ enum binder_driver_return_protocol {
 	BR_OK = _IO('r', 1),
 	/* No parameters! */
 
+	BR_TRANSACTION_SEC_CTX = _IOR('r', 2,
+				      struct binder_transaction_data_secctx),
+	/*
+	 * binder_transaction_data_secctx: the received command.
+	 */
 	BR_TRANSACTION = _IOR('r', 2, struct binder_transaction_data),
 	BR_REPLY = _IOR('r', 3, struct binder_transaction_data),
 	/*

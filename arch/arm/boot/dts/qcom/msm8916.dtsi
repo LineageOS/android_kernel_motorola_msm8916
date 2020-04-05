@@ -11,8 +11,8 @@
  */
 
 #include "skeleton64.dtsi"
-#include <dt-bindings/clock/msm-clocks-8916.h>
-#include <dt-bindings/clock/msm-clocks-a7.h>
+#include "../../../../include/dt-bindings/clock/msm-clocks-8916.h"
+#include "../../../../include/dt-bindings/clock/msm-clocks-a7.h"
 
 / {
 	model = "Qualcomm Technologies, Inc. MSM8916";
@@ -391,6 +391,7 @@
 	};
 
 	cpubw: qcom,cpubw {
+		label = "soc:qcom,cpubw";
 		compatible = "qcom,devbw";
 		governor = "cpufreq";
 		qcom,src-dst-ports = <1 512>;
