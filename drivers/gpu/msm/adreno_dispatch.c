@@ -1803,11 +1803,12 @@ static int dispatcher_do_fault(struct kgsl_device *device)
 	adreno_clear_gpu_halt(adreno_dev);
 	ret = adreno_reset(device);
 	mutex_unlock(&device->mutex);
-	/* if any other fault got in until reset then ignore */
-	atomic_set(&dispatcher->fault, 0);
 
 	/* If adreno_reset() fails then what hope do we have for the future? */
 	BUG_ON(ret);
+
+	/* if any other fault got in until reset then ignore */
+	atomic_set(&dispatcher->fault, 0);
 
 	/* recover all the dispatch_q's starting with the one that hung */
 	if (dispatch_q)
