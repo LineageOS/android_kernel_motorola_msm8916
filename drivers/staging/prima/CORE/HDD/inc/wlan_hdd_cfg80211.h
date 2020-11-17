@@ -177,8 +177,6 @@ enum qca_nl80211_vendor_subcmds {
 
     /* Get Wifi Specific Info */
     QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_INFO = 61,
-    /* Start Wifi Memory Dump */
-    QCA_NL80211_VENDOR_SUBCMD_WIFI_LOGGER_MEMORY_DUMP = 63,
 
     /*
      * APIs corresponding to the sub commands 65-68 are deprecated.
@@ -199,159 +197,7 @@ enum qca_nl80211_vendor_subcmds {
     QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES = 101,
 
     QCA_NL80211_VENDOR_SUBCMD_SETBAND = 105,
-
-    /* send BSS Information */
-    QCA_NL80211_VENDOR_SUBCMD_GET_STATION = 121,
-
-    /* Start / Stop the NUD stats collections */
-    QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_SET = 149,
-    /* Get the NUD stats, represented by the enum qca_attr_nud_stats_get */
-    QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET = 150,
 };
-
-/**
- * enum qca_wlan_vendor_attr_get_station - Sub commands used by
- * QCA_NL80211_VENDOR_SUBCMD_GET_STATION to get the corresponding
- * station information. The information obtained through these
- * commands signify the current info in connected state and
- * latest cached information during the connected state , if queried
- * when in disconnected state.
- *
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO: bss info
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_ASSOC_FAIL_REASON: assoc fail reason
- */
-enum qca_wlan_vendor_attr_get_station {
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INVALID = 0,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_ASSOC_FAIL_REASON,
-
-	/* keep last */
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_AFTER_LAST,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX =
-		QCA_WLAN_VENDOR_ATTR_GET_STATION_AFTER_LAST - 1,
-};
-
-/**
- * enum qca_wlan_802_11_mode - dot11 mode
- * @QCA_WLAN_802_11_MODE_INVALID: Invalid dot11 mode
- * @QCA_WLAN_802_11_MODE_11A: mode A
- * @QCA_WLAN_802_11_MODE_11B: mode B
- * @QCA_WLAN_802_11_MODE_11G: mode G
- * @QCA_WLAN_802_11_MODE_11N: mode N
- * @QCA_WLAN_802_11_MODE_11AC: mode AC
- */
-enum qca_wlan_802_11_mode {
-	QCA_WLAN_802_11_MODE_INVALID,
-	QCA_WLAN_802_11_MODE_11A,
-	QCA_WLAN_802_11_MODE_11B,
-	QCA_WLAN_802_11_MODE_11G,
-	QCA_WLAN_802_11_MODE_11N,
-	QCA_WLAN_802_11_MODE_11AC,
-};
-
-/**
- * enum qca_wlan_auth_type - Authentication key management type
- * @QCA_WLAN_AUTH_TYPE_INVALID: Invalid key management type
- * @QCA_WLAN_AUTH_TYPE_OPEN: Open key
- * @QCA_WLAN_AUTH_TYPE_SHARED: shared key
- * @QCA_WLAN_AUTH_TYPE_WPA: wpa key
- * @QCA_WLAN_AUTH_TYPE_WPA_PSK: wpa psk key
- * @QCA_WLAN_AUTH_TYPE_WPA_NONE: wpa none key
- * @QCA_WLAN_AUTH_TYPE_RSN: rsn key
- * @QCA_WLAN_AUTH_TYPE_RSN_PSK: rsn psk key
- * @QCA_WLAN_AUTH_TYPE_FT: ft key
- * @QCA_WLAN_AUTH_TYPE_FT_PSK: ft psk key
- * @QCA_WLAN_AUTH_TYPE_SHA256: shared 256 key
- * @QCA_WLAN_AUTH_TYPE_SHA256_PSK: shared 256 psk
- * @QCA_WLAN_AUTH_TYPE_WAI: wai key
- * @QCA_WLAN_AUTH_TYPE_WAI_PSK wai psk key
- * @QCA_WLAN_AUTH_TYPE_CCKM_WPA: cckm wpa key
- * @QCA_WLAN_AUTH_TYPE_CCKM_RSN: cckm rsn key
- */
-enum qca_wlan_auth_type {
-	QCA_WLAN_AUTH_TYPE_INVALID,
-	QCA_WLAN_AUTH_TYPE_OPEN,
-	QCA_WLAN_AUTH_TYPE_SHARED,
-	QCA_WLAN_AUTH_TYPE_WPA,
-	QCA_WLAN_AUTH_TYPE_WPA_PSK,
-	QCA_WLAN_AUTH_TYPE_WPA_NONE,
-	QCA_WLAN_AUTH_TYPE_RSN,
-	QCA_WLAN_AUTH_TYPE_RSN_PSK,
-	QCA_WLAN_AUTH_TYPE_FT,
-	QCA_WLAN_AUTH_TYPE_FT_PSK,
-	QCA_WLAN_AUTH_TYPE_SHA256,
-	QCA_WLAN_AUTH_TYPE_SHA256_PSK,
-	QCA_WLAN_AUTH_TYPE_WAI,
-	QCA_WLAN_AUTH_TYPE_WAI_PSK,
-	QCA_WLAN_AUTH_TYPE_CCKM_WPA,
-	QCA_WLAN_AUTH_TYPE_CCKM_RSN,
-	QCA_WLAN_AUTH_TYPE_AUTOSWITCH,
-};
-
-/**
- * enum qca_wlan_vendor_attr_get_station_info - Station Info queried
- * through QCA_NL80211_VENDOR_SUBCMD_GET_STATION.
- *
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_INVALID: Invalid Attribute
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR:
- *  Get the standard NL attributes Nested with this attribute.
- *  Ex : Query BW , BITRATE32 , NSS , Signal , Noise of the Link -
- *  NL80211_ATTR_SSID / NL80211_ATTR_SURVEY_INFO (Connected Channel) /
- *  NL80211_ATTR_STA_INFO
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR:
- *  Get the standard NL attributes Nested with this attribute.
- *  Ex : Query HT/VHT Capability advertized by the AP.
- *  NL80211_ATTR_VHT_CAPABILITY / NL80211_ATTR_HT_CAPABILITY
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT:
- *  Number of successful Roam attempts before a
- *  disconnect, Unsigned 32 bit value
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM:
- *  Authentication Key Management Type used for the connected session.
- *  Signified by enum qca_wlan_auth_type
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE: 802.11 Mode of the
- *  connected Session, signified by enum qca_wlan_802_11_mode
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION:
- *  HS20 Indication Element
- * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON:
- *  Status Code Corresponding to the Association Failure.
- *  Unsigned 32 bit value.
- */
-enum qca_wlan_vendor_attr_get_station_info {
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_INVALID = 0,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON,
-	/* keep last */
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST,
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_MAX =
-		QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST - 1,
-};
-
-/* define short names for get station info attributes */
-#define LINK_INFO_STANDARD_NL80211_ATTR \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR
-#define AP_INFO_STANDARD_NL80211_ATTR \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR
-#define INFO_ROAM_COUNT \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT
-#define INFO_AKM \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM
-#define WLAN802_11_MODE \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE
-#define AP_INFO_HS20_INDICATION \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION
-#define HT_OPERATION \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION
-#define VHT_OPERATION \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION
-#define INFO_ASSOC_FAIL_REASON \
-	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON
 
 enum qca_nl80211_vendor_subcmds_index {
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -377,67 +223,9 @@ enum qca_nl80211_vendor_subcmds_index {
     /*EXT TDLS*/
     QCA_NL80211_VENDOR_SUBCMD_TDLS_STATE_CHANGE_INDEX,
     QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX,
-    QCA_NL80211_VENDOR_SUBCMD_WIFI_LOGGER_MEMORY_DUMP_INDEX,
 
     QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI_INDEX,
     QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_HOTLIST_AP_LOST_INDEX,
-    QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX,
-};
-
-/**
- * qca_wlan_vendor_attr_nud_stats_set: attribute to vendor subcmd
- * QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_SET. This carry the requisite
- * information to start / stop the NUD stats collection.
- */
-enum qca_attr_nud_stats_set {
-    QCA_ATTR_NUD_STATS_SET_INVALID = 0,
-
-    /* Flag to Start / Stop the NUD stats collection
-     * Start - If included , Stop - If not included
-     */
-    QCA_ATTR_NUD_STATS_SET_START = 1,
-    /* IPv4 address of Default Gateway (in network byte order) */
-    QCA_ATTR_NUD_STATS_GW_IPV4 = 2,
-
-    /* keep last */
-    QCA_ATTR_NUD_STATS_SET_LAST,
-    QCA_ATTR_NUD_STATS_SET_MAX =
-            QCA_ATTR_NUD_STATS_SET_LAST - 1,
-};
-
-/**
- * qca_attr_nud_stats_get: attribute to vendor subcmd
- * QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET. This carry the requisite
- * NUD stats collected when queried.
- */
-enum qca_attr_nud_stats_get {
-    QCA_ATTR_NUD_STATS_GET_INVALID = 0,
-    /* ARP Request Count from net dev */
-    QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_FROM_NETDEV = 1,
-    /* ARP Request Count sent to lower MAC from upper MAC */
-    QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TO_LOWER_MAC = 2,
-    /* ARP Request Count received by lower MAC from upper MAC */
-    QCA_ATTR_NUD_STATS_ARP_REQ_RX_COUNT_BY_LOWER_MAC = 3,
-    /* ARP Request Count successfully transmitted by the device */
-    QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TX_SUCCESS = 4,
-    /* ARP Response Count received by lower MAC */
-    QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_LOWER_MAC = 5,
-    /* ARP Response Count received by upper MAC */
-    QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_UPPER_MAC = 6,
-    /* ARP Response Count delivered to netdev */
-    QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_TO_NETDEV = 7,
-    /* ARP Response Count delivered to netdev */
-    QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_OUT_OF_ORDER_DROP = 8,
-    /*
-     * Flag indicating if the Stations Link to AP is active.
-     * Active Link - If exists, Inactive link - If not included
-     */
-    QCA_ATTR_NUD_STATS_AP_LINK_ACTIVE= 9,
-    QCA_ATTR_NUD_STATS_AP_LINK_DAD= 10,
-     /* keep last */
-    QCA_ATTR_NUD_STATS_GET_LAST,
-    QCA_ATTR_NUD_STATS_GET_MAX =
-            QCA_ATTR_NUD_STATS_GET_LAST - 1,
 };
 
 enum qca_wlan_vendor_attr
@@ -1594,27 +1382,6 @@ backported_cfg80211_vendor_event_alloc(struct wiphy *wiphy,
 }
 #define cfg80211_vendor_event_alloc backported_cfg80211_vendor_event_alloc
 #endif
-
-/**
- * enum qca_wlan_vendor_attr_memory_dump - values for memory dump attributes
- * @QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_INVALID - Invalid
- * @QCA_WLAN_VENDOR_ATTR_REQUEST_ID - Indicate request ID
- * @QCA_WLAN_VENDOR_ATTR_MEMDUMP_SIZE - Indicate size of the memory dump
- * @QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_AFTER_LAST - To keep track of the last enum
- * @QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_MAX - max value possible for this type
- *
- * enum values are used for NL attributes for data used by
- * QCA_NL80211_VENDOR_SUBCMD_WIFI_LOGGER_MEMORY_DUMP sub command.
- */
-enum qca_wlan_vendor_attr_memory_dump {
-    QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_INVALID = 0,
-    QCA_WLAN_VENDOR_ATTR_REQUEST_ID = 1,
-    QCA_WLAN_VENDOR_ATTR_MEMDUMP_SIZE = 2,
-
-    QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_AFTER_LAST,
-    QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_MAX =
-    QCA_WLAN_VENDOR_ATTR_MEMORY_DUMP_AFTER_LAST - 1,
-};
 
 #if defined(CFG80211_DISCONNECTED_V2) || \
 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))

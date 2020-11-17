@@ -274,7 +274,7 @@ limSuspendLink(tpAniSirGlobal pMac, tSirLinkTrafficCheck trafficCheck,  SUSPEND_
    if( pMac->lim.gpLimSuspendCallback ||
        pMac->lim.gLimSystemInScanLearnMode )
    {
-      limLog( pMac, LOGE, FL("Something is wrong, SuspendLinkCbk:%pK "
+      limLog( pMac, LOGE, FL("Something is wrong, SuspendLinkCbk:%p "
               "IsSystemInScanLearnMode:%d"), pMac->lim.gpLimSuspendCallback,
                pMac->lim.gLimSystemInScanLearnMode );
       callback( pMac, eHAL_STATUS_FAILURE, data ); 

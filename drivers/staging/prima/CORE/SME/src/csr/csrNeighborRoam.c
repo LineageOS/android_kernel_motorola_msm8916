@@ -1211,17 +1211,6 @@ eHalStatus csrNeighborRoamPreauthRspHandler(tpAniSirGlobal pMac, tSirRetStatus l
            goto abort_preauth;
         }
 
-        if (pMac->roam.pending_roam_disable)
-        {
-            smsLog(pMac, LOG1, FL("process pending roam disable"));
-            pMac->roam.configParam.isFastRoamIniFeatureEnabled = FALSE;
-            pMac->roam.pending_roam_disable = FALSE;
-            csrNeighborRoamUpdateFastRoamingEnabled(pMac, FALSE);
-            CSR_NEIGHBOR_ROAM_STATE_TRANSITION(
-                                   eCSR_NEIGHBOR_ROAM_STATE_CONNECTED);
-            goto DEQ_PREAUTH;
-        }
-
         /* Issue preauth request for the same/next entry */
         if (eHAL_STATUS_SUCCESS == csrNeighborRoamIssuePreauthReq(pMac))
         goto DEQ_PREAUTH; 
@@ -2608,7 +2597,7 @@ eHalStatus csrNeighborRoamIssueBgScanRequest(tpAniSirGlobal pMac,
 
     vos_mem_free(scanReq.SSIDs.SSIDList);
     if (1 == pBgScanParams->ChannelInfo.numOfChannels)
-        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %pK, Actual index = %d"),
+        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %p, Actual index = %d"),
                 &pMac->roam.neighborRoamInfo.roamChannelInfo.currentChannelListInfo.ChannelList[0], 
                 pMac->roam.neighborRoamInfo.roamChannelInfo.currentChanIndex);
 
@@ -2655,7 +2644,7 @@ eHalStatus csrNeighborRoamPerformBgScan(tpAniSirGlobal pMac, tANI_U32 sessionId)
     if ( pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList &&
          pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels )
     {
-        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %pK"), &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[0]);
+        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %p"), &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[0]);
     }
     else 
     {
@@ -4641,13 +4630,6 @@ eHalStatus csrNeighborRoamIndicateConnect(tpAniSirGlobal pMac, tANI_U8 sessionId
                                 pNeighborRoamInfo->isESEAssoc, init_ft_flag);
                             
 #endif
-
-            if (pMac->roam.pending_roam_disable)
-            {
-                smsLog(pMac, LOG1, FL("process pending roam disable"));
-                pMac->roam.configParam.isFastRoamIniFeatureEnabled = FALSE;
-                pMac->roam.pending_roam_disable = FALSE;
-            }
 
 #ifdef FEATURE_WLAN_LFR
             // If "Legacy Fast Roaming" is enabled 

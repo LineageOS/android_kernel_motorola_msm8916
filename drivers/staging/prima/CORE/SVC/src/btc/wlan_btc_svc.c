@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -56,14 +56,12 @@ void send_btc_nlink_msg (int type, int dest_pid)
    struct nlmsghdr *nlh;
    tAniMsgHdr *aniHdr;
    tWlanAssocData *assocData;
-   uint32_t skb_size = NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD);
-   skb = alloc_skb(skb_size, GFP_KERNEL);
+   skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
    if(skb == NULL) {
       VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
          "BTC: alloc_skb failed\n");
       return;
    }   
-   vos_mem_zero(skb->data, skb_size);
    nlh = (struct nlmsghdr *)skb->data;
    nlh->nlmsg_pid = 0;  /* from kernel */
    nlh->nlmsg_flags = 0;
@@ -214,21 +212,6 @@ int btc_activate_service(void *pAdapter)
    //Register the msg handler for msgs addressed to ANI_NL_MSG_BTC
    nl_srv_register(WLAN_NL_MSG_BTC, btc_msg_callback);
    return 0;
-}
-
-/**---------------------------------------------------------------------------
-
-  \brief btc_deactivate_service() - Deactivate btc message handler
-
-  This function unregisters a handler to receive netlink messages
-  addressed to WLAN_NL_MSG_BTC from user space.
-
-  \return - none
-  --------------------------------------------------------------------------*/
-void btc_deactivate_service()
-{
-   //unregister the msg handler for msgs addressed to ANI_NL_MSG_BTC
-   nl_srv_unregister(WLAN_NL_MSG_BTC, btc_msg_callback);
 }
 /*
  * Callback function invoked by Netlink service for all netlink

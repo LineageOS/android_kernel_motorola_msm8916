@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -132,13 +132,10 @@ static void hdd_sendMgmtFrameOverMonitorIface( hdd_adapter_t *pMonAdapter,
                                                tANI_U8* pbFrames,
                                                tANI_U8 frameType );
 
-static v_BOOL_t wlan_hdd_is_type_p2p_action( const u8 *buf, uint32_t len )
+static v_BOOL_t hdd_p2p_is_action_type_rsp( const u8 *buf )
 {
+    tActionFrmType actionFrmType;
     const u8 *ouiPtr;
-
-    if (len < WLAN_HDD_PUBLIC_ACTION_FRAME_SUB_TYPE_OFFSET + 1) {
-        return VOS_FALSE;
-    }
 
     if ( buf[WLAN_HDD_PUBLIC_ACTION_FRAME_CATEGORY_OFFSET] !=
                WLAN_HDD_PUBLIC_ACTION_FRAME ) {
@@ -161,23 +158,14 @@ static v_BOOL_t wlan_hdd_is_type_p2p_action( const u8 *buf, uint32_t len )
         return VOS_FALSE;
     }
 
-    return VOS_TRUE;
-}
-
-static bool hdd_p2p_is_action_type_rsp( const u8 *buf, uint32_t len )
-{
-    tActionFrmType actionFrmType;
-
-    if ( wlan_hdd_is_type_p2p_action(buf, len) )
-    {
-        actionFrmType = buf[WLAN_HDD_PUBLIC_ACTION_FRAME_SUB_TYPE_OFFSET];
-        if ( actionFrmType != WLAN_HDD_INVITATION_REQ &&
-            actionFrmType != WLAN_HDD_GO_NEG_REQ &&
-            actionFrmType != WLAN_HDD_DEV_DIS_REQ &&
-            actionFrmType != WLAN_HDD_PROV_DIS_REQ )
-            return VOS_TRUE;
-    }
-    return VOS_FALSE;
+    actionFrmType = buf[WLAN_HDD_PUBLIC_ACTION_FRAME_SUB_TYPE_OFFSET];
+    if ( actionFrmType != WLAN_HDD_INVITATION_REQ &&
+        actionFrmType != WLAN_HDD_GO_NEG_REQ &&
+        actionFrmType != WLAN_HDD_DEV_DIS_REQ &&
+        actionFrmType != WLAN_HDD_PROV_DIS_REQ )
+        return VOS_TRUE;
+    else
+        return VOS_FALSE;
 }
 
 eHalStatus wlan_hdd_remain_on_channel_callback( tHalHandle hHal, void* pCtx,
@@ -285,7 +273,7 @@ eHalStatus wlan_hdd_remain_on_channel_callback( tHalHandle hHal, void* pCtx,
             vos_mem_free(pRemainChanCtx->action_pkt_buff.frame_ptr);
         }
         hddLog( LOG1, FL(
-                    "Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK"),
+                    "Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
                 cfgState->remain_on_chan_ctx);
         vos_mem_free( pRemainChanCtx );
         pRemainChanCtx = NULL;
@@ -492,7 +480,7 @@ void wlan_hdd_remain_on_chan_timeout(void *data)
 
     if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic))
     {
-        hddLog( LOGE, FL("pAdapter is invalid %pK !!!"), pAdapter);
+        hddLog( LOGE, FL("pAdapter is invalid %p !!!"), pAdapter);
         return;
     }
     pHddCtx = WLAN_HDD_GET_CTX( pAdapter );
@@ -599,7 +587,7 @@ static int wlan_hdd_p2p_start_remain_on_channel(
         hddLog(VOS_TRACE_LEVEL_ERROR,
                 FL("Not able to initalize remain_on_chan timer"));
         hddLog( LOG1, FL(
-                    "Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK"),
+                    "Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
                 cfgState->remain_on_chan_ctx);
         cfgState->remain_on_chan_ctx = NULL;
         vos_mem_free(pRemainChanCtx);
@@ -643,7 +631,7 @@ static int wlan_hdd_p2p_start_remain_on_channel(
             mutex_lock(&pHddCtx->roc_lock);
             pRemainChanCtx = cfgState->remain_on_chan_ctx;
             hddLog( LOG1, FL(
-                        "Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK"),
+                        "Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
                          cfgState->remain_on_chan_ctx);
             if (pRemainChanCtx)
             {
@@ -687,7 +675,7 @@ static int wlan_hdd_p2p_start_remain_on_channel(
             mutex_lock(&pHddCtx->roc_lock);
             pRemainChanCtx = cfgState->remain_on_chan_ctx;
             hddLog( LOG1, FL(
-                        "Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK"),
+                        "Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
                          cfgState->remain_on_chan_ctx);
             if (pRemainChanCtx)
             {
@@ -852,7 +840,7 @@ static int wlan_hdd_request_remain_on_channel( struct wiphy *wiphy,
 
                 schedule_delayed_work(&pAdapter->roc_work,
                         msecs_to_jiffies(pHddCtx->cfg_ini->gP2PListenDeferInterval));
-                hddLog(VOS_TRACE_LEVEL_INFO, "Defer interval is %hu, pAdapter %pK",
+                hddLog(VOS_TRACE_LEVEL_INFO, "Defer interval is %hu, pAdapter %p",
                         pHddCtx->cfg_ini->gP2PListenDeferInterval, pAdapter);
                 return 0;
             }
@@ -1278,27 +1266,17 @@ int __wlan_hdd_mgmt_tx( struct wiphy *wiphy, struct net_device *dev,
     hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR( pAdapter );
     hdd_remain_on_chan_ctx_t *pRemainChanCtx = NULL;
     hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX( pAdapter );
-    tANI_U8 type;
-    tANI_U8 subType;
+    tANI_U8 type = WLAN_HDD_GET_TYPE_FRM_FC(buf[0]);
+    tANI_U8 subType = WLAN_HDD_GET_SUBTYPE_FRM_FC(buf[0]);
     tActionFrmType actionFrmType = WLAN_HDD_ACTION_FRM_TYPE_MAX;
     bool noack = 0;
     int status;
-    uint32_t mgmt_hdr_len = sizeof(struct ieee80211_hdr_3addr);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,38))
     uint8_t home_ch = 0;
 #endif
 
     ENTER();
-
-    if (len < mgmt_hdr_len + 1) {
-        hddLog(VOS_TRACE_LEVEL_ERROR,"Invalid Length");
-        return -EINVAL;
-    }
-
-    type = WLAN_HDD_GET_TYPE_FRM_FC(buf[0]);
-    subType = WLAN_HDD_GET_SUBTYPE_FRM_FC(buf[0]);
-
     MTRACE(vos_trace(VOS_MODULE_ID_HDD,
                       TRACE_CODE_HDD_ACTION, pAdapter->sessionId,
                       pAdapter->device_mode ));
@@ -1315,8 +1293,7 @@ int __wlan_hdd_mgmt_tx( struct wiphy *wiphy, struct net_device *dev,
 
     if ((type == SIR_MAC_MGMT_FRAME) &&
             (subType == SIR_MAC_MGMT_ACTION) &&
-            wlan_hdd_is_type_p2p_action(
-            &buf[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET], len - mgmt_hdr_len))
+            (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] == WLAN_HDD_PUBLIC_ACTION_FRAME))
     {
         actionFrmType = buf[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
 #ifdef WLAN_FEATURE_P2P_DEBUG
@@ -1615,9 +1592,7 @@ bypass_lock:
 
         if ((type == SIR_MAC_MGMT_FRAME) &&
                 (subType == SIR_MAC_MGMT_ACTION) &&
-            wlan_hdd_is_type_p2p_action(
-             &buf[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET],
-             len - mgmt_hdr_len))
+                (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] == WLAN_HDD_PUBLIC_ACTION_FRAME))
         {
             actionFrmType = buf[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
             hddLog(LOG1, "Tx Action Frame %u.", actionFrmType);
@@ -2396,7 +2371,7 @@ void hdd_sendMgmtFrameOverMonitorIface( hdd_adapter_t *pMonAdapter,
      {
          VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_FATAL,
                    "HDD [%d]: Insufficient headroom, "
-                   "head[%pK], data[%pK], req[%d]",
+                   "head[%p], data[%p], req[%d]",
                    __LINE__, skb->head, skb->data, nFrameLength);
          kfree_skb(skb);
          return ;
@@ -2478,7 +2453,8 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 
     /* Get pAdapter from Destination mac address of the frame */
     if ((type == SIR_MAC_MGMT_FRAME) &&
-            (subType != SIR_MAC_MGMT_PROBE_REQ))
+        (subType != SIR_MAC_MGMT_PROBE_REQ) &&
+        (nFrameLength > WLAN_HDD_80211_FRM_DA_OFFSET + VOS_MAC_ADDR_SIZE))
     {
          pAdapter = hdd_get_adapter_by_macaddr( WLAN_HDD_GET_CTX(pAdapter),
                             &pbFrames[WLAN_HDD_80211_FRM_DA_OFFSET]);
@@ -2547,12 +2523,16 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
     cfgState = WLAN_HDD_GET_CFG_STATE_PTR( pAdapter );
 
     if ((type == SIR_MAC_MGMT_FRAME) &&
-        (subType == SIR_MAC_MGMT_ACTION))
+        (subType == SIR_MAC_MGMT_ACTION) &&
+        (nFrameLength > WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET + 1))
     {
         if(pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] == WLAN_HDD_PUBLIC_ACTION_FRAME)
         {
             // public action frame
-            if((pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET+1] == SIR_MAC_ACTION_VENDOR_SPECIFIC) &&
+            if((WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET + SIR_MAC_P2P_OUI_SIZE + 2 <
+                nFrameLength) &&
+               (pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET+1] ==
+                SIR_MAC_ACTION_VENDOR_SPECIFIC) &&
                 vos_mem_compare(&pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET+2], SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE))
             // P2P action frames
             {

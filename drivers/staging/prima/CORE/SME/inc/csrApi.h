@@ -360,11 +360,10 @@ typedef struct tagCsrEseCckmInfo
 #endif
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-#define CSR_DOT11F_IE_RSN_MAX_LEN   (114)  /*TODO: duplicate one in dot11f.h */
 
 typedef struct tagCsrEseCckmIe
 {
-    tANI_U8 cckmIe[CSR_DOT11F_IE_RSN_MAX_LEN];
+    tANI_U8 cckmIe[DOT11F_IE_RSN_MAX_LEN];
     tANI_U8 cckmIeLen;
 } tCsrEseCckmIe;
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
@@ -1238,7 +1237,6 @@ typedef struct tagCsrConfigParam
     uint32_t edca_vi_aifs;
     uint32_t edca_bk_aifs;
     uint32_t edca_be_aifs;
-    tANI_BOOLEAN disable_scan_during_sco;
 }tCsrConfigParam;
 
 //Tush
@@ -1330,12 +1328,6 @@ typedef struct tagCsrRoamInfo
 #ifdef WLAN_FEATURE_AP_HT40_24G
     tpSirHT2040CoexInfoInd pSmeHT2040CoexInfoInd;
 #endif
-    tDot11fIEHTCaps ht_caps;
-    tDot11fIEVHTCaps vht_caps;
-    tDot11fIEhs20vendor_ie hs20vendor_ie;
-    tDot11fIEVHTOperation vht_operation;
-    tDot11fIEHTInfo ht_operation;
-    bool reassoc;
 }tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo

@@ -1360,13 +1360,6 @@ REG_TABLE_ENTRY g_registry_table[] =
                  CFG_REORDER_TIME_VO_MIN,
                  CFG_REORDER_TIME_VO_MAX ),
 
-   REG_VARIABLE( CFG_ENABLE_PN_REPLAY_NAME , WLAN_PARAM_Integer,
-                 hdd_config_t, enablePNReplay,
-                 VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-                 CFG_ENABLE_PN_REPLAY_DEFAULT,
-                 CFG_ENABLE_PN_REPLAY_MIN,
-                 CFG_ENABLE_PN_REPLAY_MAX ),
-
    REG_VARIABLE_STRING( CFG_WOWL_PATTERN_NAME, WLAN_PARAM_String,
                         hdd_config_t, wowlPattern,
                         VAR_FLAGS_OPTIONAL,
@@ -3426,13 +3419,6 @@ REG_VARIABLE( CFG_EXTSCAN_ENABLE, WLAN_PARAM_Integer,
                   CFG_SAP_SCAN_BAND_PREFERENCE_MIN,
                   CFG_SAP_SCAN_BAND_PREFERENCE_MAX ),
 
-   REG_VARIABLE(CFG_ENABLE_RTT_SUPPORT, WLAN_PARAM_Integer,
-                  hdd_config_t, enable_rtt_support,
-                  VAR_FLAGS_OPTIONAL,
-                  CFG_ENABLE_RTT_SUPPORT_DEFAULT,
-                  CFG_ENABLE_RTT_SUPPORT_MIN,
-                  CFG_ENABLE_RTT_SUPPORT_MAX ),
-
    REG_VARIABLE( CFG_ENABLE_DYNAMIC_RA_START_RATE_NAME, WLAN_PARAM_Integer,
                   hdd_config_t, enableDynamicRAStartRate,
                   VAR_FLAGS_OPTIONAL |
@@ -3559,13 +3545,6 @@ REG_VARIABLE( CFG_EXTSCAN_ENABLE, WLAN_PARAM_Integer,
                  CFG_OPTIMIZE_CA_EVENT_DEFAULT,
                  CFG_OPTIMIZE_CA_EVENT_DISABLE,
                  CFG_OPTIMIZE_CA_EVENT_ENABLE ),
-
-   REG_VARIABLE(CFG_FWR_MEM_DUMP_NAME, WLAN_PARAM_Integer,
-                 hdd_config_t,enableFwrMemDump,
-                 VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-                 CFG_FWR_MEM_DUMP_DEF,
-                 CFG_FWR_MEM_DUMP_MIN,
-                 CFG_FWR_MEM_DUMP_MAX),
 
    REG_VARIABLE( CFG_ACTIVE_PASSIVE_CHAN_CONV_NAME, WLAN_PARAM_Integer,
                  hdd_config_t, gActivePassiveChCon,
@@ -3763,12 +3742,6 @@ REG_VARIABLE( CFG_EXTSCAN_ENABLE, WLAN_PARAM_Integer,
                CFG_SAP_INTERNAL_RESTART_MIN,
                CFG_SAP_INTERNAL_RESTART_MAX),
 
-  REG_VARIABLE(CFG_DISABLE_SCAN_DURING_SCO, WLAN_PARAM_Integer,
-               hdd_config_t, disable_scan_during_sco,
-               VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-               CFG_DISABLE_SCAN_DURING_SCO_DEFAULT,
-               CFG_DISABLE_SCAN_DURING_SCO_MIN,
-               CFG_DISABLE_SCAN_DURING_SCO_MAX ),
 };
 
 /*
@@ -4331,11 +4304,6 @@ static void print_hdd_cfg(hdd_context_t *pHddCtx)
   VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO_HIGH,
           "Name = [gPERRoamUpThresholdRate] Value = [%u] ",
           pHddCtx->cfg_ini->rateUpThreshold);
-
-  VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO_HIGH,
-        "Name = [gDisableScanDuringSco] Value = [%u] ",
-         pHddCtx->cfg_ini->disable_scan_during_sco);
-
 #endif
   VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO_HIGH,
         "Name = [gEnableSapInternalRestart] Value = [%u] ",
@@ -5959,15 +5927,6 @@ v_BOOL_t hdd_update_config_dat( hdd_context_t *pHddCtx )
        fStatus = FALSE;
        hddLog(LOGE, "Could not pass on WNI_CFG_SAR_BOFFSET_SET_CORRECTION to CCM");
    }
-
-   if (ccmCfgSetInt(pHddCtx->hHal, WNI_CFG_DISABLE_SCAN_DURING_SCO,
-               pConfig->disable_scan_during_sco,
-               NULL, eANI_BOOLEAN_FALSE) == eHAL_STATUS_FAILURE)
-   {
-      fStatus = FALSE;
-      hddLog(LOGE, "Could not pass on WNI_CFG_DISABLE_SCAN_DURING_SCO to CCM");
-   }
-
    return fStatus;
 }
 
@@ -6105,8 +6064,6 @@ VOS_STATUS hdd_set_sme_config( hdd_context_t *pHddCtx )
    smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
    smeConfig->csrConfig.fEnableBypass11d          = pConfig->enableBypass11d;
    smeConfig->csrConfig.fEnableDFSChnlScan        = pConfig->enableDFSChnlScan;
-   smeConfig->csrConfig.disable_scan_during_sco   =
-                                              pConfig->disable_scan_during_sco;
 #if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
    smeConfig->csrConfig.nRoamPrefer5GHz           = pConfig->nRoamPrefer5GHz;
    smeConfig->csrConfig.nRoamIntraBand            = pConfig->nRoamIntraBand;

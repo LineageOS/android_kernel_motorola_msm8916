@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -525,10 +525,6 @@ typedef struct
    uint8_t  mgmt_pktfree_fail;
    vos_lock_t mgmt_pkt_lock;
 
-   /* debug connection status */
-   bool tx_aggr;
-   uint8_t sta_id;
-   uint8_t tid;
 } tWDA_CbContext ; 
 
 typedef struct
@@ -1297,12 +1293,6 @@ tSirRetStatus uMacPostCtrlMsg(void* pSirGlobal, tSirMbMsg* pMb);
 #define WDA_START_RSSI_MONITOR_REQ             SIR_HAL_RSSI_MON_START_REQ
 #define WDA_STOP_RSSI_MONITOR_REQ              SIR_HAL_RSSI_MON_STOP_REQ
 
-/* ARP Debug */
-#define WDA_SET_ARP_STATS_REQ                 SIR_HAL_SET_ARP_STATS_REQ
-#define WDA_GET_ARP_STATS_REQ                 SIR_HAL_GET_ARP_STATS_REQ
-#define WDA_TRIGGER_ADD_BA_REQ                SIR_HAL_TRIGGER_ADD_BA_REQ
-#define WDA_GET_CON_STATUS                    SIR_HAL_GET_CON_STATUS
-
 tSirRetStatus wdaPostCtrlMsg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
 
 eHalStatus WDA_SetRegDomain(void * clientCtxt, v_REGDOMAIN_t regId,
@@ -1348,8 +1338,6 @@ eHalStatus WDA_SetRegDomain(void * clientCtxt, v_REGDOMAIN_t regId,
 #ifdef WLAN_FEATURE_EXTSCAN
 #define WDA_HIGH_PRIORITY_DATA_INFO_IND         SIR_HAL_HIGH_PRIORITY_DATA_INFO_IND
 #endif /* WLAN_FEATURE_EXTSCAN */
-
-#define WDA_FW_MEM_DUMP_REQ                  SIR_HAL_FW_MEM_DUMP_REQ
 
 #define WDA_WIFI_CONFIG_REQ                    SIR_HAL_WIFI_CONFIG_PARAMS
 
@@ -1610,7 +1598,6 @@ WDA_DS_FinishULA
     txFlag
     timeStamp
     ucIsEapol
-    ucIsArp
     ucUP
 
    OUT
@@ -1640,7 +1627,6 @@ WDA_DS_BuildTxPacketInfo
   v_U32_t          txFlag,
   v_U32_t         timeStamp,
   v_U8_t          ucIsEapol,
-  v_U8_t          ucIsArp,
   v_U8_t          ucUP,
   v_U32_t         ucTxBdToken
 );

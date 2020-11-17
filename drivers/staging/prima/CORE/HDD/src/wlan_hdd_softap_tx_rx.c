@@ -73,10 +73,10 @@
 #if 0
 static void hdd_softap_dump_sk_buff(struct sk_buff * skb)
 {
-  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: head = %pK", __func__, skb->head);
-  //VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: data = %pK", __func__, skb->data);
-  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: tail = %pK", __func__, skb->tail);
-  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: end = %pK", __func__, skb->end);
+  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: head = %p", __func__, skb->head);
+  //VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: data = %p", __func__, skb->data);
+  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: tail = %p", __func__, skb->tail);
+  VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: end = %p", __func__, skb->end);
   VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: len = %d", __func__, skb->len);
   VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: data_len = %d", __func__, skb->data_len);
   VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,"%s: mac_len = %d", __func__, skb->mac_len);
@@ -141,19 +141,17 @@ void hdd_softap_traffic_monitor_timeout_handler( void *pUsrData )
    return;
 }
 
-VOS_STATUS hdd_start_trafficMonitor( hdd_adapter_t *pAdapter, bool re_init)
+VOS_STATUS hdd_start_trafficMonitor( hdd_adapter_t *pAdapter )
 {
 
     hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
     VOS_STATUS status = VOS_STATUS_SUCCESS;
 
     ENTER();
-
-    if (!re_init) {
-        status = wlan_hdd_validate_context(pHddCtx);
-        if (-ENODEV == status) {
-            return status;
-        }
+    status = wlan_hdd_validate_context(pHddCtx);
+    if (0 != status)
+    {
+        return status;
     }
 
     if ((pHddCtx->cfg_ini->enableTrafficMonitor) &&
@@ -184,18 +182,16 @@ VOS_STATUS hdd_start_trafficMonitor( hdd_adapter_t *pAdapter, bool re_init)
     return status;
 }
 
-VOS_STATUS hdd_stop_trafficMonitor( hdd_adapter_t *pAdapter, bool re_init)
+VOS_STATUS hdd_stop_trafficMonitor( hdd_adapter_t *pAdapter )
 {
     hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
     VOS_STATUS status = VOS_STATUS_SUCCESS;
 
     ENTER();
-
-    if (!re_init){
-        status = wlan_hdd_validate_context(pHddCtx);
-        if (-ENODEV == status) {
-            return status;
-        }
+    status = wlan_hdd_validate_context(pHddCtx);
+    if (-ENODEV == status)
+    {
+        return status;
     }
 
     if (pHddCtx->traffic_monitor.isInitialized)
@@ -853,7 +849,7 @@ struct net_device_stats* hdd_softap_stats(struct net_device *dev)
   @return         : VOS_STATUS_E_FAILURE if any errors encountered 
                   : VOS_STATUS_SUCCESS otherwise
   ===========================================================================*/
-VOS_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter, bool re_init)
+VOS_STATUS hdd_softap_init_tx_rx( hdd_adapter_t *pAdapter )
 {
    VOS_STATUS status = VOS_STATUS_SUCCESS;
    v_SINT_t i = -1;
@@ -905,7 +901,7 @@ VOS_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter, bool re_init)
    /* Update the AC weights suitable for SoftAP mode of operation */
    WLANTL_SetACWeights((WLAN_HDD_GET_CTX(pAdapter))->pvosContext, pACWeights);
 
-   if (VOS_STATUS_SUCCESS != hdd_start_trafficMonitor(pAdapter, re_init))
+   if (VOS_STATUS_SUCCESS != hdd_start_trafficMonitor(pAdapter))
    {
        VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,
           "%s: failed to start Traffic Monito timer ", __func__ );
@@ -922,11 +918,11 @@ VOS_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter, bool re_init)
   @return         : VOS_STATUS_E_FAILURE if any errors encountered 
                   : VOS_STATUS_SUCCESS otherwise
   ===========================================================================*/
-VOS_STATUS hdd_softap_deinit_tx_rx( hdd_adapter_t *pAdapter, bool re_init)
+VOS_STATUS hdd_softap_deinit_tx_rx( hdd_adapter_t *pAdapter )
 {
    VOS_STATUS status = VOS_STATUS_SUCCESS;
 
-   if (VOS_STATUS_SUCCESS != hdd_stop_trafficMonitor(pAdapter, re_init))
+   if (VOS_STATUS_SUCCESS != hdd_stop_trafficMonitor(pAdapter))
    {
        VOS_TRACE( VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,
                  "%s: Fail to Stop Traffic Monito timer", __func__ );
@@ -1559,7 +1555,7 @@ VOS_STATUS hdd_softap_tx_low_resource_cbk( vos_pkt_t *pVosPacket,
    if (pAdapter == NULL || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)
    {
       VOS_TRACE(VOS_MODULE_ID_HDD_SAP_DATA, VOS_TRACE_LEVEL_ERROR,
-                 FL("Invalid adapter %pK"), pAdapter);
+                 FL("Invalid adapter %p"), pAdapter);
       return VOS_STATUS_E_FAILURE;
    }
    pVosContext = (WLAN_HDD_GET_CTX(pAdapter))->pvosContext;
