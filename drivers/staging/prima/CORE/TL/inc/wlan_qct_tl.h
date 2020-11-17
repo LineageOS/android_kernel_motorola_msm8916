@@ -328,10 +328,6 @@ typedef struct
   /* Min Threshold for Processing Frames in TL */
   v_U8_t   uMinFramesProcThres;
 
- /* 1 means replay check enable
-    0 means replay check disable */
-  v_BOOL_t      ucIsReplayCheck;
-
   /* Re-order Aging Time */
   v_U16_t  ucReorderAgingTime[WLANTL_MAX_AC];
 }WLANTL_ConfigInfoType;
@@ -3355,40 +3351,6 @@ WLANTL_SetMcastDuplicateDetection
     v_U8_t        enable
 );
 #endif /* WLAN_FEATURE_RMC */
-
-/*
- * WLANTL_ResetRxSSN - reset last rx ssn
- * @pvosGCtx: global vos context
- * @ucSTAId: station id
- *
- * This function resets the last ssn of all tids of the station
- * for whom BA reorder session exists.
- *
- * Return: none
- */
-void WLANTL_ResetRxSSN(v_PVOID_t pvosGCtx, uint8_t ucSTAId);
-
-/*
- * WLANTL_SetDataPktFilter - Set data filter flag
- * @pvosGCtx: global vos context
- * @ucSTAId: station id
- * @flag: packet data filter flag
- *
- * This function sets the data pkt filter flag of all tids
- * of the station for whom BA reorder session exists.
- *
- * Return: none
- */
-void WLANTL_SetDataPktFilter(v_PVOID_t pvosGCtx, uint8_t ucSTAId, bool flag);
-
-/**
- * WLANTL_SetARPFWDatapath() - keep or remove FW in data path for ARP
- * @pvosGCtx: global vos context
- * @flag: value to keep or remove FW from data path
- *
- * Return: void
- */
-void WLANTL_SetARPFWDatapath(void * pvosGCtx, bool flag);
 
 /**
  * WLANTL_SetKeySeqCounter() - set sequence key counter

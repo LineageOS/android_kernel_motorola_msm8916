@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -409,11 +409,6 @@ static int hdd_hostapd_driver_command(hdd_adapter_t *pAdapter,
        hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
        tANI_U8 filterType = 0;
        tANI_U8 *value;
-
-       ret = hdd_drv_cmd_validate(command, 8);
-       if (ret)
-           goto exit;
-
        value = command + 9;
 
        /* Convert the value from ascii to integer */
@@ -454,10 +449,6 @@ static int hdd_hostapd_driver_command(hdd_adapter_t *pAdapter,
    }
    else if (strncasecmp(command, "DISABLE_CA_EVENT", 16) == 0)
    {
-       ret = hdd_drv_cmd_validate(command, 16);
-       if (ret)
-           goto exit;
-
        ret = hdd_enable_disable_ca_event(pHddCtx, command, 16);
    }
 
@@ -661,7 +652,7 @@ void hdd_hostapd_inactivity_timer_cb(v_PVOID_t usrDataForCallback)
     if ((NULL == pHostapdAdapter) ||
         (WLAN_HDD_ADAPTER_MAGIC != pHostapdAdapter->magic))
     {
-         hddLog(LOGE, FL("invalid adapter: %pK"), pHostapdAdapter);
+         hddLog(LOGE, FL("invalid adapter: %p"), pHostapdAdapter);
          return;
     }
     pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
@@ -1354,7 +1345,6 @@ int hdd_softap_unpackIE(
  
     tANI_U8 *pRsnIe; 
     tANI_U16 RSNIeLen;
-    tANI_U32 status;
     
     if (NULL == halHandle)
     {
@@ -1380,18 +1370,10 @@ int hdd_softap_unpackIE(
         RSNIeLen = gen_ie_len - 2; 
         // Unpack the RSN IE
         memset(&dot11RSNIE, 0, sizeof(tDot11fIERSN));
-        status = dot11fUnpackIeRSN((tpAniSirGlobal) halHandle,
-                            pRsnIe,
-                            RSNIeLen,
+        dot11fUnpackIeRSN((tpAniSirGlobal) halHandle, 
+                            pRsnIe, 
+                            RSNIeLen, 
                             &dot11RSNIE);
-        if (DOT11F_FAILED(status))
-        {
-             hddLog(LOGE,
-                        FL("unpack failed for RSN IE status:(0x%08x)"),
-                        status);
-             return -EINVAL;
-        }
-
         // Copy out the encryption and authentication types 
         hddLog(LOG1, FL("%s: pairwise cipher suite count: %d"),
                 __func__, dot11RSNIE.pwise_cipher_suite_count );
@@ -1425,18 +1407,10 @@ int hdd_softap_unpackIE(
         RSNIeLen = gen_ie_len - (2 + 4); 
         // Unpack the WPA IE
         memset(&dot11WPAIE, 0, sizeof(tDot11fIEWPA));
-        status = dot11fUnpackIeWPA((tpAniSirGlobal) halHandle,
-                            pRsnIe,
-                            RSNIeLen,
+        dot11fUnpackIeWPA((tpAniSirGlobal) halHandle, 
+                            pRsnIe, 
+                            RSNIeLen, 
                             &dot11WPAIE);
-        if (DOT11F_FAILED(status))
-        {
-             hddLog(LOGE,
-                        FL("unpack failed for WPA IE status:(0x%08x)"),
-                        status);
-             return -EINVAL;
-        }
-
         // Copy out the encryption and authentication types 
         hddLog(LOG1, FL("%s: WPA unicast cipher suite count: %d"),
                 __func__, dot11WPAIE.unicast_cipher_count );
@@ -2602,7 +2576,7 @@ static int __iw_softap_set_trafficmonitor(struct net_device *dev,
     if (TRUE == *isSetTrafficMon)
     {
         pHddCtx->cfg_ini->enableTrafficMonitor= TRUE;
-        if (VOS_STATUS_SUCCESS != hdd_start_trafficMonitor(pAdapter, false))
+        if (VOS_STATUS_SUCCESS != hdd_start_trafficMonitor(pAdapter))
         {
             VOS_TRACE( VOS_MODULE_ID_HDD_SOFTAP, VOS_TRACE_LEVEL_ERROR,
                        "%s: failed to Start Traffic Monitor timer ", __func__ );
@@ -2612,7 +2586,7 @@ static int __iw_softap_set_trafficmonitor(struct net_device *dev,
     else if (FALSE == *isSetTrafficMon)
     {
         pHddCtx->cfg_ini->enableTrafficMonitor= FALSE;
-        if (VOS_STATUS_SUCCESS != hdd_stop_trafficMonitor(pAdapter, false))
+        if (VOS_STATUS_SUCCESS != hdd_stop_trafficMonitor(pAdapter))
         {
             VOS_TRACE( VOS_MODULE_ID_HDD_SOFTAP, VOS_TRACE_LEVEL_ERROR,
                        "%s: failed to Stop Traffic Monitor timer ", __func__ );
@@ -3539,7 +3513,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
          /*Convert from 1-based to 0-based keying*/
         key_index--;
     }
-    if(!ext->key_len || ext->key_len > CSR_MAX_KEY_LEN) {
+    if(!ext->key_len) {
 #if 0
       /*Set the encrytion type to NONE*/
 #if 0
@@ -3585,7 +3559,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
              retval = -EINVAL;
          }
 #endif
-         return -EINVAL;
+         return retval;
 
     }
     
@@ -3594,7 +3568,9 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
     setKey.keyId = key_index;
     setKey.keyLength = ext->key_len;
    
-    vos_mem_copy(&setKey.Key[0],ext->key,ext->key_len);
+    if(ext->key_len <= CSR_MAX_KEY_LEN) {
+       vos_mem_copy(&setKey.Key[0],ext->key,ext->key_len);
+    }   
    
     if(ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
       /*Key direction for group is RX only*/
@@ -3916,6 +3892,50 @@ static int iw_get_ap_freq(struct net_device *dev,
    return ret;
 }
 
+static int __iw_get_mode(struct net_device *dev,
+                         struct iw_request_info *info,
+                         union iwreq_data *wrqu, char *extra)
+{
+    int status = 0;
+    hdd_adapter_t *pAdapter;
+    hdd_context_t *pHddCtx;
+
+    ENTER();
+
+    pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+    if (NULL == pAdapter)
+    {
+        VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
+                  "%s: Adapter is NULL",__func__);
+        return -EINVAL;
+    }
+    pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+    status = wlan_hdd_validate_context(pHddCtx);
+    if (0 != status)
+    {
+        return status;
+    }
+
+    wrqu->mode = IW_MODE_MASTER;
+
+    EXIT();
+    return status;
+}
+
+static int iw_get_mode(struct net_device *dev,
+                       struct iw_request_info *info,
+                       union iwreq_data *wrqu, char *extra)
+{
+    int ret;
+
+    vos_ssr_protect(__func__);
+    ret = __iw_get_mode(dev, info, wrqu, extra);
+    vos_ssr_unprotect(__func__);
+
+    return ret;
+}
+
+
 static int __iw_softap_stopbss(struct net_device *dev,
                              struct iw_request_info *info,
                              union iwreq_data *wrqu,
@@ -4161,14 +4181,6 @@ static int __iw_set_ap_genie(struct net_device *dev,
         return 0;
     }
 
-    if (wrqu->data.length > DOT11F_IE_RSN_MAX_LEN)
-    {
-        VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
-                  "%s: WPARSN Ie input length is more than max[%d]", __func__,
-                  wrqu->data.length);
-        return -EINVAL;
-   }
-
     switch (genie[0])
     {
         case DOT11F_EID_WPA:
@@ -4410,7 +4422,7 @@ static const iw_handler      hostapd_handler[] =
    (iw_handler) NULL,           /* SIOCSIWFREQ */
    (iw_handler) iw_get_ap_freq,    /* SIOCGIWFREQ */
    (iw_handler) NULL,           /* SIOCSIWMODE */
-   (iw_handler) NULL,           /* SIOCGIWMODE */
+   (iw_handler) iw_get_mode,    /* SIOCGIWMODE */
    (iw_handler) NULL,           /* SIOCSIWSENS */
    (iw_handler) NULL,           /* SIOCGIWSENS */
    (iw_handler) NULL,           /* SIOCSIWRANGE */
@@ -4665,19 +4677,18 @@ void hdd_set_ap_ops( struct net_device *pWlanHostapdDev )
 #endif
 }
 
-VOS_STATUS hdd_init_ap_mode( hdd_adapter_t *pAdapter, bool re_init)
+VOS_STATUS hdd_init_ap_mode( hdd_adapter_t *pAdapter )
 {
     hdd_hostapd_state_t * phostapdBuf;
     struct net_device *dev = pAdapter->dev;
     hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
     VOS_STATUS status;
-    hdd_config_t *ini_cfg;
 #ifdef FEATURE_WLAN_CH_AVOID
     v_U16_t unsafeChannelList[NUM_20MHZ_RF_CHANNELS];
     v_U16_t unsafeChannelCount;
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-    if (pHddCtx->isLogpInProgress && !re_init) {
+    if (pHddCtx->isLogpInProgress) {
        VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO,
                        "%s:LOGP in Progress. Ignore!!!",__func__);
        status = VOS_STATUS_E_FAILURE;
@@ -4730,7 +4741,7 @@ VOS_STATUS hdd_init_ap_mode( hdd_adapter_t *pAdapter, bool re_init)
     dev->wireless_handlers = (struct iw_handler_def *)& hostapd_handler_def;
 
     //Initialize the data path module
-    status = hdd_softap_init_tx_rx(pAdapter, re_init);
+    status = hdd_softap_init_tx_rx(pAdapter);
     if ( !VOS_IS_STATUS_SUCCESS( status ))
     {
        hddLog(VOS_TRACE_LEVEL_FATAL, "%s: hdd_softap_init_tx_rx failed", __func__);
@@ -4747,21 +4758,10 @@ VOS_STATUS hdd_init_ap_mode( hdd_adapter_t *pAdapter, bool re_init)
 
     set_bit(WMM_INIT_DONE, &pAdapter->event_flags);
 
-    ini_cfg =  pHddCtx->cfg_ini;
-    if (re_init && ini_cfg) {
-        hddLog(VOS_TRACE_LEVEL_INFO, FL("start_ch: %d end_ch:%d op_band:%d"),
-                          ini_cfg->apStartChannelNum, ini_cfg->apEndChannelNum,
-                          ini_cfg->apOperatingBand);
-        WLANSAP_SetChannelRange(WLAN_HDD_GET_HAL_CTX(pAdapter),
-                                ini_cfg->apStartChannelNum,
-                                ini_cfg->apEndChannelNum,
-                                ini_cfg->apOperatingBand);
-    }
-
     return status;
 
 error_wmm_init:
-    hdd_softap_deinit_tx_rx(pAdapter, re_init);
+    hdd_softap_deinit_tx_rx( pAdapter );
     EXIT();
     return status;
 }
@@ -4857,7 +4857,7 @@ VOS_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, tANI_U8 rtnl_held)
 {
    ENTER();
    
-   hdd_softap_deinit_tx_rx(pAdapter, false);
+   hdd_softap_deinit_tx_rx(pAdapter);
 
    /* if we are being called during driver unload, then the dev has already
       been invalidated.  if we are being called at other times, then we can
@@ -4897,9 +4897,7 @@ void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter)
 	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (NULL == hdd_ctx || NULL == hdd_ctx->cfg_ini) {
-		VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO,
-			"%s: HDD context is Null", __func__);
+	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
 		return;
 	}
 
@@ -4918,7 +4916,7 @@ void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter)
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
 		if (sap_ctx->aStaInfo[staId].isUsed) {
-			hddLog(LOG1, FL("staId: %d isUsed: %d %pK"),
+			hddLog(LOG1, FL("staId: %d isUsed: %d %p"),
 					staId, sap_ctx->aStaInfo[staId].isUsed,
 					sap_ctx);
 
@@ -4949,24 +4947,21 @@ void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter)
 }
 
 /**
- * hdd_sap_destroy_timers() - Destroy sap timers
+ * hdd_sap_destroy_events() - Destroy sap evets
  * @adapter: sap adapter context
  *
  * Return:   nothing
  */
-void hdd_sap_destroy_timers(hdd_adapter_t *adapter)
+void hdd_sap_destroy_events(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx;
 	v_CONTEXT_t vos_ctx;
 	ptSapContext sap_ctx;
-	VOS_STATUS status = VOS_STATUS_E_FAILURE;
 
 	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (NULL == hdd_ctx || NULL == hdd_ctx->cfg_ini) {
-		VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO,
-			"%s: HDD context is Null", __func__);
+	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
 		return;
 	}
 
@@ -4983,16 +4978,7 @@ void hdd_sap_destroy_timers(hdd_adapter_t *adapter)
 		return;
 	}
 
-	if (VOS_TIMER_STATE_RUNNING == sap_ctx->sap_HT2040_timer.state) {
-		status = vos_timer_stop(&sap_ctx->sap_HT2040_timer);
-		if (!VOS_IS_STATUS_SUCCESS(status))
-			VOS_TRACE( VOS_MODULE_ID_SAP, VOS_TRACE_LEVEL_ERROR,
-				FL("Failed to Stop HT20/40 timer"));
-	}
-
-	status = vos_timer_destroy(&sap_ctx->sap_HT2040_timer);
-	if (!VOS_IS_STATUS_SUCCESS(status))
-		VOS_TRACE( VOS_MODULE_ID_SAP, VOS_TRACE_LEVEL_ERROR,
-			FL("Failed to Destroy HT20/40 timer"));
-
+	if (!VOS_IS_STATUS_SUCCESS(vos_lock_destroy(&sap_ctx->SapGlobalLock)))
+		VOS_TRACE(VOS_MODULE_ID_SAP, VOS_TRACE_LEVEL_ERROR,
+			FL("WLANSAP_Stop failed destroy lock"));
 }

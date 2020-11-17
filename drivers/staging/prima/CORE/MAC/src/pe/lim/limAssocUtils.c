@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -436,8 +436,8 @@ limCheckMCSSet(tpAniSirGlobal pMac, tANI_U8* supportedMCSSet)
  *
  * @param  rxRSNIe - received RSN IE in (Re)Assco req
  *
- * @return status - true if ALL supported cipher suites are present in the
- *                  received rsn IE else false.
+ * @return status - true if ALL BSS basic rates are present in the
+ *                  received rateset else false.
  */
 
 tANI_U8
@@ -563,8 +563,8 @@ limCheckRxRSNIeMatch(tpAniSirGlobal pMac, tDot11fIERSN rxRSNIe,tpPESession pSess
  *
  * @param  rxWPAIe - Received WPA IE in (Re)Assco req
  *
- * @return status - true if ALL supported cipher suites are present in the
- *                  received wpa IE else false.
+ * @return status - true if ALL BSS basic rates are present in the
+ *                  received rateset else false.
  */
 
 tANI_U8
@@ -3374,9 +3374,6 @@ limCheckAndAnnounceJoinSuccess(tpAniSirGlobal pMac,
         mlmJoinCnf.sessionId = psessionEntry->peSessionId;
         limPostSmeMessage(pMac, LIM_MLM_JOIN_CNF, (tANI_U32 *) &mlmJoinCnf);
     } // if ((pMac->lim.gLimSystemRole == IBSS....
-
-     /* Update HS 2.0 Information Element */
-    sir_copy_hs20_ie(&psessionEntry->hs20vendor_ie, &pBPR->hs20vendor_ie);
 }
 
 /**

@@ -101,17 +101,15 @@
 #define SOFTAP_BSS_STARTED     (4)
 #define DEVICE_IFACE_OPENED    (5)
 #define TDLS_INIT_DONE         (6)
-#define SOFTAP_INIT_DONE       (7)
 
 /** Maximum time(ms)to wait for disconnect to complete **/
 #define WLAN_WAIT_TIME_DISCONNECT  5000
 #define WLAN_WAIT_TIME_STATS       800
-#define WLAN_WAIT_TIME_POWER       5000
+#define WLAN_WAIT_TIME_POWER       800
 #define WLAN_WAIT_TIME_COUNTRY     1000
 #define WLAN_WAIT_TIME_CHANNEL_UPDATE   600
 #define FW_STATE_WAIT_TIME 500
 #define FW_STATE_RSP_LEN 100
-
 /* Amount of time to wait for sme close session callback.
    This value should be larger than the timeout used by WDI to wait for
    a response from WCNSS */
@@ -132,9 +130,6 @@
 
 /** Maximum time(ms) to wait for tdls initiator to start direct communication **/
 #define WAIT_TIME_TDLS_INITIATOR    600
-
-/**Maximum time(ms) to wait for clear packet req to complete **/
-#define PKT_FILTER_TIMEOUT 300
 
 /* Maximum time to get linux regulatory entry settings */
 #ifdef CONFIG_ENABLE_LINUX_REG
@@ -243,8 +238,6 @@ typedef v_U8_t tWlanHddMacAddr[HDD_MAC_ADDR_LEN];
 #endif
 
 #define SCAN_REJECT_THRESHOLD_TIME 300000 /* Time is in msec, equal to 5 mins */
-#define SCAN_REJECT_THRESHOLD 15
-
 
 #define WLAN_WAIT_TIME_EXTSCAN  1000
 
@@ -306,7 +299,6 @@ extern spinlock_t hdd_context_lock;
 #define GET_FRAME_LOG_MAGIC   0x464c4f47   //FLOG
 #define MON_MODE_MSG_MAGIC 0x51436B3A //MON_MODE
 #define ANTENNA_CONTEXT_MAGIC 0x414E544E //ANTN
-#define CLEAR_FILTER_MAGIC 0x52349732 //CLEAR FILTER
 #define MON_MODE_MSG_TIMEOUT 5000
 #define MON_MODE_START 1
 #define MON_MODE_STOP  0
@@ -382,35 +374,6 @@ typedef struct hdd_pmf_stats_s
 } hdd_pmf_stats_t;
 #endif
 
-typedef enum
-{
-   HDD_TX_FRAME_IN_NOT_ASSOCIATED_STATE = 0,
-   HDD_VOS_PACKET_RETURNED_BY_VOSS_IS_NULL,
-   HDD_WLANTL_STAPKTPENDING_RETURNED_ERROR_CODE,
-   HDD_INSERT_TX_QUEUE_FAILED,
-   HDD_FAILED_TO_SIGNAL_TL,
-   HDD_ERROR_ATTACHING_SKB,
-   HDD_FAILURE_EXTRACTING_SKB_FROM_VOS_PKT,
-   HDD_FAILURE_WALKING_PACKET_CHAIN,
-   HDD_STA_RX_ARP_PACKET_REFUSED_IN_NET_STACK
-} HDD_PACKET_DROP_CAUSE;
-
-typedef struct hdd_arp_stats_s
-{
-   uint16   tx_arp_req_count;
-   uint16   rx_arp_rsp_count;
-   uint16   txDropped;
-   uint16   rxDropped;
-   uint16   rxDelivered;
-   uint16   rxRefused;
-   uint16   tx_host_fw_sent;
-   uint16   rx_host_drop_reorder;
-   uint16_t tx_fw_cnt;
-   uint16_t rx_fw_cnt;
-   uint16_t tx_ack_cnt;
-   HDD_PACKET_DROP_CAUSE reason;
-} hdd_arp_stats_t;
-
 typedef struct hdd_stats_s
 {
    tCsrSummaryStatsInfo       summary_stat;
@@ -421,7 +384,6 @@ typedef struct hdd_stats_s
    tCsrPerStaStatsInfo        perStaStats;
    hdd_tx_rx_stats_t          hddTxRxStats;
    hdd_chip_reset_stats_t     hddChipResetStats;
-   hdd_arp_stats_t            hddArpStats;
 #ifdef WLAN_FEATURE_11W
    hdd_pmf_stats_t            hddPmfStats;
 #endif
@@ -802,7 +764,6 @@ struct hdd_station_ctx
    hdd_ibss_peer_info_t ibss_peer_info;
 
    v_BOOL_t hdd_ReassocScenario;
-   v_BOOL_t get_mgmt_log_sent;
 
 };
 
@@ -1152,10 +1113,7 @@ struct hdd_adapter_s
 #ifdef FEATURE_WLAN_WAPI
    hdd_wapi_info_t wapi_info;
 #endif
-
-   /* Keep track ns offload count */
-   v_U8_t ns_slots;
-
+   
    v_S7_t rssi;
    v_S7_t rssi_on_disconnect;
 
@@ -1237,7 +1195,7 @@ struct hdd_adapter_s
    v_BOOL_t isLinkLayerStatsSet;
 #endif
    /* DSCP to UP QoS Mapping */
-   sme_QosWmmUpType hddWmmDscpToUpMap[WLAN_HDD_MAX_DSCP+1];
+   sme_QosWmmUpType hddWmmDscpToUpMap[WLAN_MAX_DSCP+1];
    /* Lock for active sessions while processing deauth/Disassoc */
    spinlock_t lock_for_active_session;
    tSirFwStatsResult  fwStatsRsp;
@@ -1256,9 +1214,6 @@ struct hdd_adapter_s
 
    /* Currently used antenna Index*/
    int antennaIndex;
-   bool nud_set_arp_stats;
-   bool con_status;
-   bool dad;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -1316,10 +1271,6 @@ typedef struct
 
 #define WLAN_WAIT_TIME_LL_STATS 800
 
-#define WLAN_WAIT_TIME_NUD_STATS 800
-#define WLAN_NUD_STATS_LEN 800
-#define WLAN_NUD_STATS_ARP_PKT_TYPE 1
-
 /* FW memory dump feature
 @TODO : Move this code to a separate file later */
 #define PROCFS_MEMDUMP_DIR  "debug"
@@ -1348,8 +1299,6 @@ struct hdd_fw_mem_dump_req_ctx {
  */
 typedef void (*hdd_fw_mem_dump_req_cb)(void *context);
 
-int memdump_init(void);
-int memdump_deinit(void);
 void wlan_hdd_fw_mem_dump_cb(void *,tAniFwrDumpRsp *);
 int wlan_hdd_fw_mem_dump_req(hdd_context_t * pHddCtx);
 void wlan_hdd_fw_mem_dump_req_cb(void *context);
@@ -1367,15 +1316,6 @@ struct hdd_ll_stats_context {
     struct completion response_event;
 };
 #endif /* End of WLAN_FEATURE_LINK_LAYER_STATS */
-
-/**
- * struct hdd_nud_stats_context - hdd NUD stats context
- *
- * @response_event: NUD stats request wait event
- */
-struct hdd_nud_stats_context {
-    struct completion response_event;
-};
 #ifdef WLAN_FEATURE_EXTSCAN
 /**
  * struct hdd_ext_scan_context - hdd ext scan context
@@ -1661,7 +1601,6 @@ struct hdd_context_s
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
     struct hdd_ll_stats_context ll_stats_context;
 #endif /* End of WLAN_FEATURE_LINK_LAYER_STATS */
-    struct hdd_nud_stats_context nud_stats_context;
 
 #ifdef WLAN_FEATURE_EXTSCAN
     struct hdd_ext_scan_context ext_scan_context;
@@ -1695,9 +1634,6 @@ struct hdd_context_s
     v_U8_t last_scan_reject_session_id;
     scan_reject_states last_scan_reject_reason;
     v_TIME_t last_scan_reject_timestamp;
-    v_U8_t scan_reject_cnt;
-    bool is_fatal_event_log_sup;
-    uint32_t track_arp_ip;
 };
 
 typedef enum  {
@@ -2015,19 +1951,6 @@ static inline void hdd_init_ll_stat_ctx(void)
     return;
 }
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
-
-/**
- * hdd_init_nud_stats_ctx() - initialize NUD stats context
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_init_nud_stats_ctx(hdd_context_t *hdd_ctx)
-{
-    init_completion(&hdd_ctx->nud_stats_context.response_event);
-    return;
-}
-
 void hdd_initialize_adapter_common(hdd_adapter_t *pAdapter);
 void hdd_wlan_free_wiphy_channels(struct wiphy *wiphy);
 void wlan_hdd_init_deinit_defer_scan_context(scan_context_t *scan_ctx);
@@ -2049,17 +1972,5 @@ int hdd_reassoc(hdd_adapter_t *pAdapter, const tANI_U8 *bssid,
 			const tANI_U8 channel, const handoff_src src);
 
 void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter);
-
-/**
- * hdd_drv_cmd_validate() - Validates for space in hdd driver command
- * @command: pointer to input data (its a NULL terminated string)
- * @len: length of command name
- *
- * This function checks for space after command name and if no space
- * is found returns error.
- *
- * Return: 0 for success non-zero for failure
- */
-int hdd_drv_cmd_validate(tANI_U8 *command, int len);
 
 #endif    // end #if !defined( WLAN_HDD_MAIN_H )

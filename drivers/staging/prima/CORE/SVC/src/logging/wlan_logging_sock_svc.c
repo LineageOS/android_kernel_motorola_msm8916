@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+* Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
 *
 * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
 *
@@ -739,8 +739,8 @@ static int send_fw_log_pkt_to_user(void)
 		msg_header.wmsg.length = skb->len;
 
 		if (unlikely(skb_headroom(skb) < sizeof(msg_header))) {
-			pr_err("VPKT [%d]: Insufficient headroom, head[%pK],"
-				" data[%pK], req[%zu]", __LINE__, skb->head,
+			pr_err("VPKT [%d]: Insufficient headroom, head[%p],"
+				" data[%p], req[%zu]", __LINE__, skb->head,
 				skb->data, sizeof(msg_header));
 			return -EIO;
 		}
@@ -835,8 +835,8 @@ static int send_data_mgmt_log_pkt_to_user(void)
 		msg_header.frameSize = WLAN_MGMT_LOGGING_FRAMESIZE_128BYTES;
 
 		if (unlikely(skb_headroom(skb) < sizeof(msg_header))) {
-			pr_err("VPKT [%d]: Insufficient headroom, head[%pK],"
-				" data[%pK], req[%zu]", __LINE__, skb->head,
+			pr_err("VPKT [%d]: Insufficient headroom, head[%p],"
+				" data[%p], req[%zu]", __LINE__, skb->head,
 				skb->data, sizeof(msg_header));
 			return -EIO;
 		}
@@ -1066,8 +1066,8 @@ static int send_per_pkt_stats_to_user(void)
 		pktlog.seq_no = gwlan_logging.pkt_stats_msg_idx++;
 
 		if (unlikely(skb_headroom(plog_msg->skb) < sizeof(vos_log_pktlog_info))) {
-			pr_err("VPKT [%d]: Insufficient headroom, head[%pK],"
-				" data[%pK], req[%zu]", __LINE__, plog_msg->skb->head,
+			pr_err("VPKT [%d]: Insufficient headroom, head[%p],"
+				" data[%p], req[%zu]", __LINE__, plog_msg->skb->head,
 				plog_msg->skb->data, sizeof(msg_header));
 			ret = -EIO;
 			free_old_skb = true;
@@ -1077,8 +1077,8 @@ static int send_per_pkt_stats_to_user(void)
 							sizeof(vos_log_pktlog_info));
 
 		if (unlikely(skb_headroom(plog_msg->skb) < sizeof(int))) {
-			pr_err("VPKT [%d]: Insufficient headroom, head[%pK],"
-				" data[%pK], req[%zu]", __LINE__, plog_msg->skb->head,
+			pr_err("VPKT [%d]: Insufficient headroom, head[%p],"
+				" data[%p], req[%zu]", __LINE__, plog_msg->skb->head,
 				plog_msg->skb->data, sizeof(int));
 			ret = -EIO;
 			free_old_skb = true;
@@ -1104,8 +1104,8 @@ static int send_per_pkt_stats_to_user(void)
 		msg_header.wmsg.length = cpu_to_be16(plog_msg->skb->len);
 
 		if (unlikely(skb_headroom(plog_msg->skb) < sizeof(msg_header))) {
-			pr_err("VPKT [%d]: Insufficient headroom, head[%pK],"
-				" data[%pK], req[%zu]", __LINE__, plog_msg->skb->head,
+			pr_err("VPKT [%d]: Insufficient headroom, head[%p],"
+				" data[%p], req[%zu]", __LINE__, plog_msg->skb->head,
 				plog_msg->skb->data, sizeof(msg_header));
 			ret = -EIO;
 			free_old_skb = true;
@@ -2024,7 +2024,7 @@ size_t wlan_fwr_mem_dump_fsread_handler(char __user *buf,
 {
 	if (buf == NULL || gwlan_logging.fw_mem_dump_ctx.fw_dump_start_loc == NULL)
 	{
-		pr_err("%s : start loc : %pK buf : %pK ",__func__,gwlan_logging.fw_mem_dump_ctx.fw_dump_start_loc,buf);
+		pr_err("%s : start loc : %p buf : %p ",__func__,gwlan_logging.fw_mem_dump_ctx.fw_dump_start_loc,buf);
 		return 0;
 	}
 
@@ -2078,73 +2078,7 @@ void wlan_store_fwr_mem_dump_size(uint32 dump_size)
 	gwlan_logging.fw_mem_dump_ctx.fw_dump_max_size = dump_size;
 	spin_unlock_irqrestore(&gwlan_logging.fw_mem_dump_ctx.fw_mem_dump_lock, flags);
 }
-/**
- * wlan_indicate_mem_dump_complete() -  When H2H for mem
- * dump finish invoke the handler.
- *
- * This is a handler used to indicate user space about the
- * availability for firmware memory dump via vendor event.
- *
- * Return: None
- */
-void wlan_indicate_mem_dump_complete(bool status )
-{
-	hdd_context_t *hdd_ctx;
-	void *vos_ctx;
-	int ret;
-	struct sk_buff *skb = NULL;
-	vos_ctx = vos_get_global_context(VOS_MODULE_ID_SYS, NULL);
-	if (!vos_ctx) {
-		pr_err("Invalid VOS context");
-		return;
-	}
 
-	hdd_ctx = vos_get_context(VOS_MODULE_ID_HDD, vos_ctx);
-	if(!hdd_ctx) {
-		pr_err("Invalid HDD context");
-		return;
-	}
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		pr_err("HDD context is not valid");
-		return;
-	}
-
-
-	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-		sizeof(uint32_t) + NLA_HDRLEN + NLMSG_HDRLEN);
-
-	if (!skb) {
-		pr_err("cfg80211_vendor_event_alloc failed");
-		return;
-	}
-	if(status)
-	{
-		if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MEMDUMP_SIZE,
-				gwlan_logging.fw_mem_dump_ctx.fw_dump_max_size)) {
-			pr_err("nla put fail");
-			goto nla_put_failure;
-		}
-	}
-	else
-	{
-		pr_err("memdump failed.Returning size 0 to user");
-		if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MEMDUMP_SIZE,
-				0)) {
-			pr_err("nla put fail");
-			goto nla_put_failure;
-		}
-	}
-	/*indicate mem dump complete*/
-	cfg80211_vendor_cmd_reply(skb);
-	pr_info("Memdump event sent successfully to user space : recvd size %d",(int)(gwlan_logging.fw_mem_dump_ctx.fw_dump_current_loc - gwlan_logging.fw_mem_dump_ctx.fw_dump_start_loc));
-	return;
-
-nla_put_failure:
-	kfree_skb(skb);
-	return;
-}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * wlan_report_log_completion() - Report bug report completion to userspace
