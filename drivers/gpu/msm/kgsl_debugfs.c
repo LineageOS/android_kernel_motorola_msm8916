@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2008-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2008-2014,2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -120,17 +120,24 @@ static void print_mem_entry(struct seq_file *s, struct kgsl_mem_entry *entry)
 	flags[2] = get_alignflag(m);
 	flags[3] = get_cacheflag(m);
 	flags[4] = kgsl_memdesc_use_cpu_map(m) ? 'p' : '-';
-	flags[5] = (m->useraddr) ? 'Y' : 'N';
+	/*
+	 * Show Y if at least one vma has this entry
+	 * mapped (could be multiple)
+	 */
+	flags[5] = atomic_read(&entry->map_count) ? 'Y' : 'N';
 	flags[6] = '\0';
 
 	kgsl_get_memory_usage(usage, sizeof(usage), m->flags);
 
-	seq_printf(s, "%pK %pK %8zd %5d %6s %10s %16s %5d\n",
+	seq_printf(s, "%pK %d %8zd %5d %6s %10s %16s %5d %16d\n",
 			(unsigned long *)(uintptr_t) m->gpuaddr,
-			(unsigned long *) m->useraddr,
-			m->size, entry->id, flags,
+			/*
+			 * Show zero for the useraddr - we can't reliably track
+			 * that value for multiple vmas anyway
+			 */
+			0, m->size, entry->id, flags,
 			memtype_str(kgsl_memdesc_usermem_type(m)),
-			usage, m->sglen);
+			usage, m->sglen, atomic_read(&entry->map_count));
 }
 
 static int process_mem_print(struct seq_file *s, void *unused)
@@ -222,7 +229,7 @@ kgsl_process_init_debugfs(struct kgsl_process_private *private)
 	int ret = 0;
 	struct dentry *dentry;
 
-	snprintf(name, sizeof(name), "%d", private->pid);
+	snprintf(name, sizeof(name), "%d", pid_nr(private->pid));
 
 	private->debug_root = debugfs_create_dir(name, proc_d_debugfs);
 
@@ -240,7 +247,8 @@ kgsl_process_init_debugfs(struct kgsl_process_private *private)
 	 * success.
 	 */
 	dentry = debugfs_create_file("mem", 0444, private->debug_root,
-		(void *) ((unsigned long) private->pid), &process_mem_fops);
+		(void *) ((unsigned long) pid_nr(private->pid)),
+		&process_mem_fops);
 
 	if (IS_ERR(dentry)) {
 		ret = PTR_ERR(dentry);

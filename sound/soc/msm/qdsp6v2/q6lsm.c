@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2019, Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2019 Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1283,8 +1283,8 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 	}
 	if (client->cb)
 		client->cb(data->opcode, data->token,
-			   data->payload, data->payload_size,
-			   client->priv);
+			data->payload, data->payload_size,
+			client->priv);
 	return 0;
 }
 

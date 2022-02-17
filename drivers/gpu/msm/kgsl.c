@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2008-2018,2019,2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -214,7 +214,7 @@ kgsl_mem_entry_create(void)
 		/* put this ref in the caller functions after init */
 		kref_get(&entry->refcount);
 	}
-
+	atomic_set(&entry->map_count, 0);
 	return entry;
 }
 #ifdef CONFIG_DMA_SHARED_BUFFER
@@ -561,7 +561,7 @@ int kgsl_context_init(struct kgsl_device_private *dev_priv,
 	if (atomic_read(&proc_priv->ctxt_count) > KGSL_MAX_CONTEXTS_PER_PROC) {
 		KGSL_DRV_ERR(device,
 			"Per process context limit reached for pid %u",
-			dev_priv->process_priv->pid);
+			pid_nr(dev_priv->process_priv->pid));
 		return -ENOSPC;
 	}
 
@@ -872,6 +872,7 @@ static void kgsl_destroy_process_private(struct kref *kref)
 	struct kgsl_process_private *private = container_of(kref,
 			struct kgsl_process_private, refcount);
 
+	put_pid(private->pid);
 	idr_destroy(&private->mem_idr);
 	idr_destroy(&private->syncsource_idr);
 	kgsl_mmu_putpagetable(private->pagetable);
@@ -899,7 +900,7 @@ struct kgsl_process_private *kgsl_process_private_find(pid_t pid)
 
 	mutex_lock(&kgsl_driver.process_mutex);
 	list_for_each_entry(p, &kgsl_driver.process_list, list) {
-		if (p->pid == pid) {
+		if (pid_nr(p->pid) == pid) {
 			if (kgsl_process_private_get(p))
 				private = p;
 			break;
@@ -913,25 +914,34 @@ static struct kgsl_process_private *kgsl_process_private_new(
 		struct kgsl_device *device)
 {
 	struct kgsl_process_private *private;
-	pid_t tgid = task_tgid_nr(current);
+	struct pid *cur_pid = get_task_pid(current->group_leader, PIDTYPE_PID);
 
 	/* Search in the process list */
 	list_for_each_entry(private, &kgsl_driver.process_list, list) {
-		if (private->pid == tgid) {
-			if (!kgsl_process_private_get(private))
+		if (private->pid == cur_pid) {
+			if (!kgsl_process_private_get(private)) {
 				private = ERR_PTR(-EINVAL);
+			}
+			/*
+			 * We need to hold only one reference to the PID for
+			 * each process struct to avoid overflowing the
+			 * reference counter which can lead to use-after-free.
+			 */
+			put_pid(cur_pid);
 			return private;
 		}
 	}
 
 	/* Create a new object */
 	private = kzalloc(sizeof(struct kgsl_process_private), GFP_KERNEL);
-	if (private == NULL)
+	if (private == NULL) {
+		put_pid(cur_pid);
 		return ERR_PTR(-ENOMEM);
+	}
 
 	kref_init(&private->refcount);
 
-	private->pid = tgid;
+	private->pid = cur_pid;
 	get_task_comm(private->comm, current->group_leader);
 	private->mem_rb = RB_ROOT;
 
@@ -943,10 +953,12 @@ static struct kgsl_process_private *kgsl_process_private_new(
 
 	/* Allocate a pagetable for the new process object */
 	if (kgsl_mmu_enabled()) {
-		private->pagetable = kgsl_mmu_getpagetable(&device->mmu, tgid);
+		private->pagetable = kgsl_mmu_getpagetable(&device->mmu,
+							pid_nr(cur_pid));
 		if (private->pagetable == NULL) {
 			idr_destroy(&private->mem_idr);
 			idr_destroy(&private->syncsource_idr);
+			put_pid(private->pid);
 
 			kfree(private);
 			private = ERR_PTR(-ENOMEM);
@@ -2647,7 +2659,7 @@ static long _sharedmem_free_entry(struct kgsl_mem_entry *entry)
 
 	trace_kgsl_mem_free(entry);
 
-	kgsl_memfree_add(entry->priv->pid, entry->memdesc.gpuaddr,
+	kgsl_memfree_add(pid_nr(entry->priv->pid), entry->memdesc.gpuaddr,
 		entry->memdesc.size, entry->memdesc.flags);
 
 	/*
@@ -2823,23 +2835,27 @@ static int check_vma_flags(struct vm_area_struct *vma,
 	return -EFAULT;
 }
 
-static int check_vma(struct vm_area_struct *vma, struct file *vmfile,
-		struct kgsl_memdesc *memdesc)
+static int check_vma(unsigned long hostptr, u64 size)
 {
-	if (vma == NULL || vma->vm_file != vmfile)
-		return -EINVAL;
+	struct vm_area_struct *vma;
+	unsigned long cur = hostptr;
 
-	/* userspace may not know the size, in which case use the whole vma */
-	if (memdesc->size == 0)
-		memdesc->size = vma->vm_end - vma->vm_start;
-	/* range checking */
-	if (vma->vm_start != memdesc->useraddr ||
-		(memdesc->useraddr + memdesc->size) != vma->vm_end)
-		return -EINVAL;
-	return check_vma_flags(vma, memdesc->flags);
+	while (cur < (hostptr + size)) {
+		vma = find_vma(current->mm, cur);
+		if (!vma)
+			return false;
+
+		/* Don't remap memory that we already own */
+		if (vma->vm_file && vma->vm_file->f_op == &kgsl_fops)
+			return false;
+
+		cur = vma->vm_end;
+	}
+
+	return true;
 }
 
-static int memdesc_sg_virt(struct kgsl_memdesc *memdesc, struct file *vmfile)
+static int memdesc_sg_virt(struct kgsl_memdesc *memdesc, unsigned long useraddr)
 {
 	int ret = 0;
 	long npages = 0, i;
@@ -2864,18 +2880,17 @@ static int memdesc_sg_virt(struct kgsl_memdesc *memdesc, struct file *vmfile)
 	sg_init_table(memdesc->sg, sglen);
 
 	down_read(&current->mm->mmap_sem);
-	/* If we have vmfile, make sure we map the correct vma and map it all */
-	if (vmfile != NULL)
-		ret = check_vma(find_vma(current->mm, memdesc->useraddr),
-				vmfile, memdesc);
-
-	if (ret == 0) {
-		npages = get_user_pages(current, current->mm, memdesc->useraddr,
-					sglen, write, 0, pages, NULL);
-		ret = (npages < 0) ? (int)npages : 0;
+	if (!check_vma(useraddr, memdesc->size)) {
+		up_read(&current->mm->mmap_sem);
+		ret = ~EFAULT;
+		goto out;
 	}
+
+	npages = get_user_pages(current, current->mm, useraddr,
+				sglen, write, 0, pages, NULL);
 	up_read(&current->mm->mmap_sem);
 
+	ret = (npages < 0) ? (int)npages : 0;
 	if (ret)
 		goto out;
 
@@ -2980,8 +2995,6 @@ static int kgsl_setup_useraddr(struct kgsl_mem_entry *entry,
 			/* Match the cache settings of the vma region */
 			_setup_cache_mode(entry, vma);
 			up_read(&current->mm->mmap_sem);
-			/* Set the useraddr to the incoming hostptr */
-			entry->memdesc.useraddr = param->hostptr;
 		}
 
 		return ret;
@@ -2989,12 +3002,11 @@ static int kgsl_setup_useraddr(struct kgsl_mem_entry *entry,
 
 	entry->memdesc.pagetable = pagetable;
 	entry->memdesc.size = param->len;
-	entry->memdesc.useraddr = param->hostptr;
 	if (kgsl_memdesc_use_cpu_map(&entry->memdesc))
-		entry->memdesc.gpuaddr = entry->memdesc.useraddr;
+		entry->memdesc.gpuaddr = param->hostptr;
 	entry->memdesc.flags |= KGSL_MEMFLAGS_USERMEM_ADDR;
 
-	return memdesc_sg_virt(&entry->memdesc, NULL);
+	return memdesc_sg_virt(&entry->memdesc, param->hostptr);
 }
 
 #ifdef CONFIG_ASHMEM
@@ -3017,12 +3029,11 @@ static int kgsl_setup_ashmem(struct kgsl_mem_entry *entry,
 	entry->priv_data = filep;
 	entry->memdesc.pagetable = pagetable;
 	entry->memdesc.size = ALIGN(size, PAGE_SIZE);
-	entry->memdesc.useraddr = useraddr;
 	if (kgsl_memdesc_use_cpu_map(&entry->memdesc))
-		entry->memdesc.gpuaddr = entry->memdesc.useraddr;
+		entry->memdesc.gpuaddr = useraddr;
 	entry->memdesc.flags |= KGSL_MEMFLAGS_USERMEM_ASHMEM;
 
-	ret = memdesc_sg_virt(&entry->memdesc, vmfile);
+	ret = memdesc_sg_virt(&entry->memdesc, useraddr);
 	if (ret)
 		put_ashmem_file(filep);
 
@@ -3721,7 +3732,12 @@ long kgsl_ioctl_gpumem_get_info(struct kgsl_device_private *dev_priv,
 	param->flags = entry->memdesc.flags;
 	param->size = entry->memdesc.size;
 	param->mmapsize = kgsl_memdesc_mmapsize(&entry->memdesc);
-	param->useraddr = entry->memdesc.useraddr;
+	/*
+	 * Entries can have multiple user mappings so thre isn't any one address
+	 * we can report. Plus, the user should already know their mappings, so
+	 * there isn't any value in reporting it back to them.
+	 */
+	param->useraddr = 0;
 
 	kgsl_mem_entry_put(entry);
 	return result;
@@ -3952,6 +3968,8 @@ kgsl_mmap_memstore(struct kgsl_device *device, struct vm_area_struct *vma)
 	if (vma->vm_flags & VM_WRITE)
 		return -EPERM;
 
+	vma->vm_flags &= ~VM_MAYWRITE;
+
 	if (memdesc->size  !=  vma_size) {
 		KGSL_MEM_ERR(device, "memstore bad size: %d should be %zd\n",
 			     vma_size, memdesc->size);
@@ -3981,6 +3999,8 @@ static void kgsl_gpumem_vm_open(struct vm_area_struct *vma)
 
 	if (kgsl_mem_entry_get(entry) == 0)
 		vma->vm_private_data = NULL;
+
+	atomic_inc(&entry->map_count);
 }
 
 static int
@@ -4004,7 +4024,7 @@ kgsl_gpumem_vm_close(struct vm_area_struct *vma)
 	if (!entry)
 		return;
 
-	entry->memdesc.useraddr = 0;
+	atomic_dec(&entry->map_count);
 	kgsl_mem_entry_put(entry);
 }
 
@@ -4036,7 +4056,8 @@ get_mmap_entry(struct kgsl_process_private *private,
 		goto err_put;
 	}
 
-	if (entry->memdesc.useraddr != 0) {
+	/* Don't allow ourselves to remap user memory */
+	if (entry->memdesc.flags & KGSL_MEMFLAGS_USERMEM_ADDR) {
 		ret = -EBUSY;
 		goto err_put;
 	}
@@ -4189,6 +4210,10 @@ static int kgsl_check_gpu_addr_collision(
 	int ret = -EAGAIN;
 	struct kgsl_mem_entry *collision_entry = NULL;
 	spin_lock(&private->mem_lock);
+	if (entry->memdesc.gpuaddr) {
+		spin_unlock(&private->mem_lock);
+		return -EBUSY;
+	}
 	if (kgsl_sharedmem_region_empty(private, addr, len, &collision_entry)) {
 		/*
 		 * We found a free memory map, claim it here with
@@ -4450,7 +4475,7 @@ put:
 	if (IS_ERR_VALUE(ret))
 		KGSL_MEM_ERR(device,
 				"pid %d pgoff %lx len %ld failed error %ld\n",
-				private->pid, pgoff, len, ret);
+				pid_nr(private->pid), pgoff, len, ret);
 	kgsl_mem_entry_put(entry);
 	return ret;
 }
@@ -4527,9 +4552,9 @@ static int kgsl_mmap(struct file *file, struct vm_area_struct *vma)
 
 	vma->vm_file = file;
 
-	entry->memdesc.useraddr = vma->vm_start;
+	atomic_inc(&entry->map_count);
 
-	trace_kgsl_mem_mmap(entry);
+	trace_kgsl_mem_mmap(entry, vma->vm_start);
 	return 0;
 }
 

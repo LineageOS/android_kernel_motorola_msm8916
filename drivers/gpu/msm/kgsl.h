@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2014,2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2008-2014,2018,2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -141,7 +141,6 @@ struct kgsl_memdesc {
 	struct kgsl_pagetable *pagetable;
 	void *hostptr; /* kernel virtual address */
 	unsigned int hostptr_count; /* number of threads using hostptr */
-	unsigned long useraddr; /* userspace address */
 	unsigned int gpuaddr;
 	phys_addr_t physaddr;
 	size_t size;
@@ -195,6 +194,11 @@ struct kgsl_mem_entry {
 	unsigned int id;
 	struct kgsl_process_private *priv;
 	int pending_free;
+	/*
+	 * @map_count: Count how many vmas this object is mapped in - used for
+	 * debugfs accounting
+	 */
+	atomic_t map_count;
 };
 
 struct kgsl_device_private;

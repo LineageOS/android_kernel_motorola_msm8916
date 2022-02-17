@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017, 2019, The Linux Foundation. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -1813,7 +1813,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 			if (data->token < 0 ||
 					data->token >= port->max_buf_cnt) {
 				pr_debug("%s: Invalid token buffer index %u\n",
-				__func__, data->token);
+					__func__, data->token);
 				spin_unlock_irqrestore(&port->dsp_lock,
 								dsp_flags);
 				spin_unlock_irqrestore(
@@ -1903,7 +1903,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 			token = data->token;
 			if (token < 0 || token >= port->max_buf_cnt) {
 				pr_debug("%s: Invalid token buffer index %u\n",
-				__func__, token);
+					__func__, token);
 				spin_unlock_irqrestore(&port->dsp_lock,
 								dsp_flags);
 				spin_unlock_irqrestore(
@@ -3132,6 +3132,12 @@ int q6asm_enc_cfg_blk_pcm_v3(struct audio_client *ac,
 		goto fail_cmd;
 	}
 
+	if (channels > PCM_FORMAT_MAX_NUM_CHANNEL) {
+		pr_err("%s: Invalid channel count %d\n", __func__, channels);
+		rc = -EINVAL;
+		goto fail_cmd;
+	}
+
 	pr_debug("%s: session[%d]rate[%d]ch[%d]bps[%d]wordsize[%d]\n", __func__,
 		 ac->session, rate, channels,
 		 bits_per_sample, sample_word_size);
@@ -3845,6 +3851,11 @@ static int __q6asm_media_format_block_pcm_v3(struct audio_client *ac,
 	struct asm_multi_channel_pcm_fmt_blk_param_v3 fmt;
 	u8 *channel_mapping;
 	int rc;
+
+	if (channels > PCM_FORMAT_MAX_NUM_CHANNEL) {
+		pr_err("%s: Invalid channel count %d\n", __func__, channels);
+		return -EINVAL;
+	}
 
 	pr_debug("%s: session[%d]rate[%d]ch[%d]bps[%d]wordsize[%d]\n", __func__,
 		 ac->session, rate, channels,
